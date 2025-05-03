@@ -1,0 +1,103 @@
+NARS Grammar Examples
+Basic Judgements
+<Bird --> Fly>. %0.9;0.8%
+<Swan --> Bird>. %1.0;0.9%
+<Tweety --> Bird>. %1.0%
+<{Tweety} {-- Bird>. %1.0;0.9%
+<Tweety --] [yellow]>. %0.8;0.9%
+<{Tweety} {-] [yellow]>. %0.7;0.6%
+Questions
+<Bird --> Fly>?
+<Tweety --> [yellow]>?
+<{Tweety} {-- Bird>?
+Goals
+<Robot --> [charged]>! :/: %0.7;0.6%
+<Bird --> [fed]>! %0.9%
+<{Tweety} --> [healthy]>! :: %0.8;0.7%
+Quests
+<Bird --> Fly>@
+<Tweety --> [fed]>@ :|:
+<Robot --> [active]>@ :/:
+Statement Variations
+<Bird --> Fly>. %0.9;0.8%
+(Bird --> Fly). %0.9;0.8%
+Operations
+(^move, Robot, north).
+move(Robot, north).
+Different Copulas
+<Bird --> Fly>. %0.9%
+<Bird <-> Swan>. %0.7;0.8%
+<{Tweety} {-- Bird>. %1.0%
+<Tweety --] [yellow]>. %0.8;0.9%
+<{Tweety} {-] [yellow]>. %0.7;0.6%
+<A ==> B>. %0.8;0.9%
+<A =/> B>. %0.7;0.6%
+<A =|> B>. %0.6;0.7%
+<A => B>. %0.5;0.7%
+<A <=> B>. %0.9;0.8%
+<A </> B>. %0.8;0.7%
+<A <|> B>. %0.7;0.6%
+Terms
+Bird. %1.0%
+$x. %0.9%
+#y. %0.8%
+?z. %0.7%
++5. %0.6%
+^move. %1.0%
+Compound Terms
+Sets
+{Tweety, Robin}. %0.9%
+[Fly, Swim]. %0.8%
+Negation
+--Bird. %0.7%
+(--, Bird). %0.7%
+Image
+(/, A, _, B). %0.6%
+(, C, _, D). %0.5%
+Multi-term Compounds
+(&&, A, B, C). %0.9%
+(||, X, Y, Z). %0.8%
+(&|, P, Q). %0.7%
+(&/, M, N). %0.6%
+(|, R, S). %0.5%
+(&, D, E). %0.4%
+(*, G, H). %0.3%
+(A, B). %0.9%
+Infix Multi-term
+(A && B). %0.8%
+(X || Y). %0.7%
+(P &| Q). %0.6%
+(M &/ N). %0.5%
+(R | S). %0.4%
+(D & E). %0.3%
+(G * H). %0.2%
+Complex Infix Expressions
+(A && B || C). %0.9%
+(X * Y && Z). %0.8%
+((A && B) || (C && D)). %0.7%
+(P &| Q &/ R). %0.6%
+(M | N & O). %0.5%
+Single-Term Operators
+(-, A, B). %0.9%
+(~, X, Y). %0.8%
+(A - B). %0.7%
+(C ~ D). %0.6%
+Tense
+<Bird --> Fly>. :/: %0.9%
+<Swan --> Bird>. :|: %0.8%
+<Tweety --> Bird>. :: %0.7%
+<Robin --> Bird>. :!5: %0.6%
+Truth Values
+<Bird --> Fly>. %0.9%
+<Swan --> Bird>. %0.8;0.7%
+<Tweety --> Bird>. %0.7;0.6;5%
+Budget
+$0.5;0.9;0.3$ <Bird --> Fly>. %0.9%
+$0.7;0.8$ <Swan --> Bird>. %0.8;0.7%
+$1.0$ <Tweety --> Bird>. %0.7;0.6;5%
+Compound Examples with Multiple Features
+$0.8;0.7;0.6$ <{Tweety} {-- Bird>. :|: %0.9;0.8;10%
+$0.9$ <(&, Bird, Swimmer) --> Duck>. :/: %0.7;0.6%
+<(A && B || C) ==> D>? ::
+<(^move, Robot, north) =/> <Robot --> [at_position]>>! %0.8;0.7%
+<{, Swan, _, Bird} <-> {/, Bird, _, Swan}>@ :!10:

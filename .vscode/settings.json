@@ -1,0 +1,54 @@
+{
+    "todo-tree.tree.showScanModeButton": true,
+    "todo-tree.highlights.defaultHighlight": {
+        "type": "text-and-comment",
+        "foreground": "white"
+    },
+    "todo-tree.highlights.customHighlight": {
+        "TODO": {
+            "background": "#d1c4e9", // Soft lavender
+            "iconColour": "#7e57c2", // Deep purple
+            "foreground": "black"
+        },
+        "FIXME": {
+            "background": "#f8bbd0", // Soft pink
+            "iconColour": "#e91e63", // Pink/red
+            "foreground": "black"
+        },
+        "NOTE": {
+            "background": "#bbdefb", // Soft light blue
+            "iconColour": "#1976d2", // Strong blue
+            "foreground": "black"
+        },
+        "NARSESE": {
+            "background": "#ffe0b2", // Soft peach/orange
+            "iconColour": "#fb8c00", // Orange
+            "foreground": "black"
+        },
+        "TRACK": {
+            "background": "#c8e6c9", // Soft mint green
+            "iconColour": "#43a047", // Green
+            "foreground": "black"
+        },
+    },
+    "todo-tree.general.tags": [
+        "TODO",
+        "FIXME",
+        "NOTE",
+        "NARSESE",
+        "TRACK"
+    ],
+    "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+    "todo-tree.tree.showBadges": true,
+    "todo-tree.tree.grouped": true,
+    "files.associations": {
+        "*.ttml": "xml",
+        "*.ttss": "css"
+    },
+    "cSpell.words": [
+        "NARS",
+        "Narsese",
+        "opennars",
+        "pegjs"
+    ]
+}
