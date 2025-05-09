@@ -1,80 +1,123 @@
-import { Config } from './Config';
-import { Truth } from './Truth';
+import { utility } from "../utils/Utility";
+import { BudgetFunctions } from "./BudgetFunctions";
+import { Memory } from "./Memory";
+import { ShortFloat } from "../utils/ShortFloat";
+import { Symbols } from "./Symbols";
 
-/**
- * Budget class for NARS system
- * Handles resource allocation through priority, durability, and quality values
- */
-class Budget {
-    static default_priority: number = 0.9;
-    static default_durability: number = 0.9;
-    static default_quality: number = 0.5;
+class Budget extends BudgetFunctions {
+    private mark: string = Symbols.BUDGET_VALUE_MARK;
+    private separator: string = Symbols.VALUE_SEPARATOR;
+    private priority: ShortFloat;
+    private durability: ShortFloat;
+    private quality: ShortFloat; 
+    private budgetFunctions: BudgetFunctions;
 
-    priority: number;
-    durability: number;
-    quality: number;
-    summary: number;
-    is_above_thresh: boolean;
+    constructor(budget?: Budget, p?: number, d?: number, q?: number) { 
+        super();
+        if (budget) {
+            this.priority = new ShortFloat(budget.getPriority());
+            this.durability = new ShortFloat(budget.getDurability());
+            this.quality = new ShortFloat(budget.getQuality());
+        }
+        else {
+            this.priority = new ShortFloat(p ?? 0.01);
+            this.durability = new ShortFloat(d ?? 0.01);
+            this.quality = new ShortFloat(q ?? 0.01);
 
-    /**
-     * Create a new Budget instance
-     * @param priority - Priority value
-     * @param durability - Durability value
-     * @param quality - Quality value
-     */
-    constructor(priority: number = -1.0, durability: number = -1.0, quality: number = -1.0) {
-        this.priority = priority >= 0.0 ? priority : Budget.default_priority;
-        this.durability = durability >= 0.0 ? durability : Budget.default_durability;
-        this.quality = quality >= 0.0 ? quality : Budget.default_quality;
-
-        this.summary = this.durability * (this.priority + this.quality) / 2.0;
-        this.is_above_thresh = this.summary > (Config.budget_thresh ?? 0); // Ensure Config.budget_thresh is defined
+        }
+        this.budgetFunctions = new BudgetFunctions();
     }
 
-    /**
-     * String representation of the budget
-     * @returns Formatted string
-     */
-    toString(): string {
-        return `$${this.priority.toFixed(3)};${this.durability.toFixed(3)};${this.quality.toFixed(3)}$`;
+    public getPriority(): number {
+        return this.priority.getValue();
     }
 
-    /**
-     * Convert budget to a vector
-     * @returns Array of priority, durability, and quality
-     */
-    to_vector(): [number, number, number] {
-        return [this.priority, this.durability, this.quality];
+    public getDurability(): number {
+        return this.durability.getValue();
     }
 
-    /**
-     * Calculate quality from a Truth instance
-     * @param t - Truth instance
-     * @returns Calculated quality
-     */
-    static quality_from_truth(t: Truth): number {
-        //NOTE: this is t.e in OpenNARS-4
-        const exp = t.expectation(); // Call the `expectation` method of Truth
-        return Math.max(exp, (1.0 - exp) * 0.75);
+    public getQuality(): number {
+        return this.quality.getValue();
     }
 
-    /**
-     * Reduce priority by a given forgetting rate
-     * @param h - Forgetting rate
-     */
-    reduce_by_achieving_level(h: number): void {
-        this.priority *= (1.0 - h);
+    public setPriority(value: number): void {
+        this.priority.setValue(value);
     }
 
-    /**
-     * Distribute budget across multiple items
-     * @param n - Number of items
-     * @returns New Budget instance with adjusted priority
-     */
-    distribute(n: number): Budget {
-        const new_priority = this.priority / Math.sqrt(n > 0 ? n : 1);
-        return new Budget(new_priority, this.durability, this.quality);
+    public setDurability(value: number): void {
+        this.durability.setValue(value);
     }
+
+    public setQuality(value: number): void {
+        this.quality.setValue(value);
+    }
+
+    //increase priority, new value = 0.5 and old value = 0.3
+    //returned value 1 - (1 - 0.3)(1 - 0.5) = 1 - 0.7 * 0.5 = 1 - 0.35 = 0.65
+    // Insure value between 0 and 1
+    // Formula: 1 - ∏(1 - xᵢ)  → 1 minus the product over (1 - xᵢ)
+    // using probabilistic OR AKA noisy-OR
+    public increasePriority(newValue: number): void {
+        this.priority.setValue(utility.or(this.priority.getValue(), newValue));
+    }
+
+    // decrease priority, new value = 0.5 and old value = 0.3
+    // returned value 0.3 * 0.5 = 0.15
+    // Insure value between 0 and 1
+    // Formula: ∏(xᵢ)  → product over xᵢ
+    // using probabilistic AND AKA noisy-AND
+    public decreasePriority(newValue: number): void {
+        this.priority.setValue(utility.and(this.priority.getValue(), newValue));
+    }
+
+    public increaseQuality(newValue: number): void {
+        this.quality.setValue(utility.or(this.quality.getValue(), newValue));
+    }
+
+    public decreaseQuality(newValue: number): void {
+        this.quality.setValue(utility.and(this.quality.getValue(), newValue));
+    }
+
+    public increaseDurability(newValue: number): void {
+        this.durability.setValue(utility.or(this.durability.getValue(), newValue));
+    }
+
+    public decreaseDurability(newValue: number): void {
+        this.durability.setValue(utility.and(this.durability.getValue(), newValue));
+    }
+
+    public merge(that: Budget): void {
+        BudgetFunctions.merge(this, that);
+    }
+
+    public singleValue(): number {
+        return utility.average(this.priority.getValue(), this.durability.getValue(), this.quality.getValue());
+    }
+
+    public aboveThreshold(): boolean {
+        return this.singleValue() > 0.001;
+    }
+
+    public toString(): string {
+        return this.mark +
+            this.priority.toString() +
+            this.separator +
+            this.durability.toString() +
+            this.separator +
+            this.quality.toString() +
+            this.mark;
+    }
+
+    public toStringTwo(): string {
+        return this.mark +
+            this.priority.toStringTwoDigits() +
+            this.separator +
+            this.durability.toStringTwoDigits() +
+            this.separator +
+            this.quality.toStringTwoDigits() +
+            this.mark;
+    }
+ 
 }
 
 export { Budget };

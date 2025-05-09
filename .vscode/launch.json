@@ -27,6 +27,20 @@
             },
             "noDebug": true,
             "console": "integratedTerminal" // Run in the integrated terminal
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current File",
+            "skipFiles": ["<node_internals>/**"],
+            "program": "${file}",
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "outFiles": ["${workspaceFolder}/**/*.js"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "console": "integratedTerminal"
         }
     ]
 }

@@ -1,62 +1,53 @@
 import { Budget } from './Budget';
-import { Config } from './Config';
 
 /**
  * Base Item class for NARS system
  * Provides budget management and comparison functionality
  */
 class Item {
-    budget: Budget;
-    private _hash_value: number;
 
-    /**
-     * Create a new Item instance
-     * @param hash_value - The hash value of the item
-     * @param budget - The budget of the item (optional)
-     * @param copy_budget - Whether to copy the budget (default: true)
-     */
-    constructor(hash_value: number, budget: Budget | null = null, copy_budget: boolean = true) {
-        this.budget = budget
-            ? (copy_budget
-                ? Object.assign(Object.create(Object.getPrototypeOf(budget)), budget)
-                : budget)
-            : new Budget(Config.priority, Config.durability, Config.quality);
+    protected key: string;
+    protected  budget: Budget;
 
-        this._hash_value = hash_value;
+    constructor(key?: string, budget?: Budget) {
+        this.key = key ?? '';
+        this.budget = budget ? new Budget(budget) : new Budget();
     }
 
-    /**
-     * Set the budget for the item
-     * @param budget - The new budget
-     */
-    set_budget(budget: Budget): void {
-        this.budget = budget;
+    public getKey():string{
+        return this.key;
     }
 
-    /**
-     * Get the hash value of the item
-     * @returns The hash value
-     */
-    hash(): number {
-        return this._hash_value;
+    public getBudget() : Budget{
+        return this.budget;
     }
 
-    /**
-     * Check equality with another item
-     * @param other - The other item to compare
-     * @returns True if equal, otherwise false
-     */
-    equals(other: Item): boolean {
-        return other instanceof Item && other.hash() === this.hash();
+    public getPriority(): number{
+        return this.budget.getPriority();
     }
 
-    /**
-     * String representation of the item
-     * @returns A string representation of the item
-     */
-    toString(): string {
-        return `${this.budget.toString()} (Item)`;
+    public getDurability(): number{
+        return this.budget.getDurability();
     }
+
+    public getQuality(): number{
+        return this.budget.getQuality();
+    } 
+
+    setPriority(priority: number) {
+        this.budget.setPriority(priority);
+    }
+    setDurability(durability: number) {
+        this.budget.setDurability(durability);
+    }
+    setQuality(quality: number) {
+        this.budget.setQuality(quality);
+    }
+
+    public merge(that : Item): void{
+        this.budget.merge(that.getBudget()); 
+    }
+
 }
 
 export { Item };

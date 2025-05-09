@@ -8,19 +8,16 @@ import { dirname, join } from 'path';
 // Local imports
 import { Task } from './Task';
 import { Config } from './Config';
-import { Sentence } from './Sentence';
 import { Judgement } from './Judgement';
 import { Term } from './Term';
 import { Copula } from './Copula';
 import { Statement } from './Statement';
-import { Budget } from './Budget';
 import { Truth } from './Truth';
-import { Question } from './Question';
-import { Quest } from './Quest';
-import { Goal } from './Goal';
 import { Tense } from './Tense';
 import { Punctuation } from './Punctuation';
-import { Stamp } from './Stamp';
+import { Budget } from './Budget';
+import { BudgetFunctions } from './BudgetFunctions';
+import { TermType } from './TermType';
 /**
  * Parser class for Narsese language
  * Handles parsing of Narsese statements and converts them to Tasks
@@ -42,7 +39,7 @@ class NarseseParser {
         this.parser = pegjs.generate(grammar);
     }
 
-     
+
 
     /**
      * Parse Narsese input into a Task
@@ -51,22 +48,22 @@ class NarseseParser {
      * @throws If parsing fails
      */
     parse(input: string): Task {
-        
+
 
         try {
             const task = this.parser.parse(input, {
                 Term,
                 Copula,
-                Sentence,
                 Statement,
+                Config,
                 Budget,
+                BudgetFunctions, 
                 Judgement,
+                TermType, 
                 Truth,
                 Tense,
-                Config,
                 Punctuation,
                 Task,
-                Stamp
             });
             // TODO: Implement the Buffer
             return task;

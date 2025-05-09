@@ -1,17 +1,15 @@
-
 enum Punctuation {
     /** Judgment statement: <bird --> animal>. */
-    Judgement = ".",
+    JUDGMENT = ".",
 
     /** Question statement: <bird --> animal>? */
-    Question = "?",
+    QUESTION = "?",
 
     /** Goal statement: <bird --> animal>! */
-    Goal = "!",
+    GOAL = "!",
 
     /** Quest statement: <bird --> animal>@ */
-    Quest = "@"
+    QUEST = "@"
 }
- 
 
 export { Punctuation };

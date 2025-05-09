@@ -42,7 +42,7 @@ export function print(type: PrintType, content: string, args?: PrintArgs): void 
 /**
  * Simple string hashing function using djb2 algorithm
  * @param str - String to hash
- * @returns 32-bit integer hash value
+ * @returns 32-bit integer hash valueue
  * @throws Error if input is not a string
  */
 export function hashString(str: string): number {
@@ -58,8 +58,50 @@ export function hashString(str: string): number {
     return hash >>> 0; // Force unsigned 32-bit integer
 }
 
+/**
+    * Arithmetic average (mean)
+    * Formula: (x₁ + x₂ + ... + xₙ) / n
+    * Example: aveAri(0.4, 0.6, 0.8) → (0.4 + 0.6 + 0.8) / 3 = 0.6
+    */
+export function average(...array: number[]): number {
+    const sum = array.reduce((accumulator, value) => accumulator + value, 0); // 0 start of accumulator
+    return sum / array.length;
+}
+
+/**
+ * Probabilistic OR (independent probabilities)
+ * Formula: 1 - ∏(1 - xᵢ)  → 1 minus the product over (1 - xᵢ)
+ * Example: or(0.3, 0.5) → 1 - (1 - 0.3)(1 - 0.5) = 1 - (0.7 * 0.5) = 1 - 0.35 = 0.65
+ */
+export function or(...array: number[]): number {
+    const product = array.reduce((accumulator, value) => accumulator * (1 - value), 1);
+    return 1 - product;
+}
+
+/**
+ * Probabilistic AND (independent probabilities)
+ * Formula: ∏xᵢ → product over all xᵢ
+ * Example: and(0.3, 0.5) → 0.3 * 0.5 = 0.15
+ */
+export function and(...array: number[]): number {
+    return array.reduce((accumulator, value) => accumulator * value, 1);
+}
+
+export function mean(...arr: number[]): number {
+    let sum = 0;
+    for (const f of arr) {
+        sum += f;
+    }
+    return sum / arr.length;
+}
+
+
 // Export all utilities as a single object
 export const utility = {
     print,
-    hashString
+    hashString,
+    average,
+    or,
+    and, 
+    mean
 } as const;

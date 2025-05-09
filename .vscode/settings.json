@@ -30,13 +30,25 @@
             "iconColour": "#43a047", // Green
             "foreground": "black"
         },
+        "IMPROVE": {
+            "background": "#3ad33f", // Soft mint green
+            "iconColour": "#43a047", // Green
+            "foreground": "black"
+        },
+        "MATH": {
+            "background": "#f6faff", // Soft mint green
+            "iconColour": "#43a047", // Green
+            "foreground": "black"
+        },
     },
     "todo-tree.general.tags": [
         "TODO",
         "FIXME",
         "NOTE",
         "NARSESE",
-        "TRACK"
+        "TRACK",
+        "IMPROVE", 
+        "MATH"
     ],
     "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
     "todo-tree.tree.showBadges": true,
@@ -49,6 +61,13 @@
         "NARS",
         "Narsese",
         "opennars",
-        "pegjs"
-    ]
+        "pegjs",
+        "punc"
+    ],
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false
+    }
 }

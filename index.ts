@@ -1,49 +1,13 @@
-import { utility } from './src/utils/Utility';
-import { Reasoner } from './src/core/Reasoner';
-import readline from 'readline';
+
+import { Reasoner } from './src/core/Reasoner'; 
+import { log } from 'console';
 
 // Initialize NARS reasoner
 const nars = new Reasoner();
+//const [success, task, overflow] = nars.inputNarsese("<<a --> b> ==> <b-->c>>. :/: %1.0;0.9%", true);
 
-// Create readline interface
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+const [success, task, overflow] = nars.inputNarsese("<a --> b>. :/: %1.0;0.9%", true);
 
-/**
- * Process input function
- * @param input - The Narsese input string
- */
-function processInput(input: string): void {
-    try {
-        const [success, task, overflow] = nars.inputNarsese(input, true);
-        if (success) {
-            utility.print('IN', String(task.sentence), task.budget);
-        } else {
-            utility.print('ERROR', 'Invalid Narsese statement');
-        }
-    } catch (error) {
-        utility.print('ERROR', `An error occurred: ${(error as Error).message}`);
-    }
-    rl.prompt();
-}
 
-// Handle input loop
-rl.on('line', (input: string) => {
-    if (input.trim().toLowerCase() === 'exit') {
-        rl.close();
-        return;
-    }
-    processInput(input);
-});
+log('Success:', success);
 
-// Handle closing
-rl.on('close', () => {
-    utility.print('INFO', 'Closing OpenNARS...');
-    process.exit(0);
-});
-
-// Start the input loop
-utility.print('INFO', 'OpenNARS initialized. Enter Narsese statements (type "exit" to quit):');
-rl.prompt();

@@ -1,4 +1,5 @@
 import { GeneralEngine } from './GeneralEngin';
+import { Memory } from './Memory';
 import { NarseseChannel } from './NarseseChannel';
 
 /**
@@ -6,21 +7,19 @@ import { NarseseChannel } from './NarseseChannel';
  * Handles reasoning and inference using the General Engine
  */
 class Reasoner {
-    private config: string;
-    private nal_rules: number[];
     private inference: GeneralEngine;
     private narsese_channel: NarseseChannel;
+    private memory: Memory;
 
     /**
      * Create a new Reasoner instance
      * @param config - Path to the configuration file (default: './config.json')
      * @param nal_rules - Array of NAL rules (default: [1, 2, 3, 4, 5, 6, 7, 8, 9])
      */
-    constructor(config: string = './config.json', nal_rules: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
-        this.config = config;
-        this.nal_rules = nal_rules;
+    constructor() {
         this.inference = new GeneralEngine();
         this.narsese_channel = new NarseseChannel(); // Initialize Narsese channel
+        this.memory = new Memory(); 
     }
 
     /**
