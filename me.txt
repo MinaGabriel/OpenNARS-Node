@@ -1,0 +1,30 @@
+
+Link.set_type: <<mina-->human>==><cat-->animal>> --- human
+Link.set_type: human --- <<mina-->human>==><cat-->animal>>
+
+Link.set_type: <<mina-->human>==><cat-->animal>> --- <mina-->human>
+Link.set_type: <mina-->human> --- <<mina-->human>==><cat-->animal>>
+
+Link.set_type: <mina-->human> --- mina
+Link.set_type: mina --- <mina-->human>
+
+Link.set_type: <mina-->human> --- human
+Link.set_type: human --- <mina-->human>
+
+Link.set_type: <<mina-->human>==><cat-->animal>> --- mina
+Link.set_type: mina --- <<mina-->human>==><cat-->animal>>
+
+Link.set_type: <<mina-->human>==><cat-->animal>> --- <cat-->animal>
+Link.set_type: <cat-->animal> --- <<mina-->human>==><cat-->animal>>
+
+Link.set_type: <cat-->animal> --- cat
+Link.set_type: cat --- <cat-->animal>
+
+Link.set_type: <cat-->animal> --- animal
+Link.set_type: animal --- <cat-->animal>
+
+Link.set_type: <<mina-->human>==><cat-->animal>> --- animal
+Link.set_type: animal --- <<mina-->human>==><cat-->animal>>
+
+Link.set_type: <<mina-->human>==><cat-->animal>> --- cat
+Link.set_type: cat --- <<mina-->human>==><cat-->animal>>

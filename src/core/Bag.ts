@@ -1,6 +1,8 @@
 import { Item } from "./Item";
 import { Distributor } from "./Distributor";
 import { BudgetFunctions } from "./BudgetFunctions";
+import Logger from "../utils/Logger";
+import * as Utility from "../utils/Utility";
 
 abstract class Bag<T extends Item> {
     protected static readonly TOTAL_LEVEL: number = 100;
@@ -59,8 +61,9 @@ abstract class Bag<T extends Item> {
     }
 
     public putIn(newItem: T): boolean {
-        const newKey = newItem.getKey();
+        const newKey = newItem.getKey(); // The key is the name of the item
         const oldItem = this.name_table.get(newKey);
+        
 
         if (oldItem) {
             this.outOfBase(oldItem);
@@ -74,6 +77,8 @@ abstract class Bag<T extends Item> {
             this.name_table.delete(overflowItem.getKey());
             return overflowItem !== newItem;
         }
+        
+        Logger.file.appendJson("name table ", Utility.mapToStringObject(this.name_table));
 
         return true;
     }
@@ -82,6 +87,14 @@ abstract class Bag<T extends Item> {
         BudgetFunctions.forget(oldItem.getBudget(), this.forget_rate, Bag.RELATIVE_THRESHOLD);
         return this.putIn(oldItem);
     }
+
+    /*
+| **If `current_level < THRESHOLD`** | **If `current_level ≥ THRESHOLD`**                         |
+| ---------------------------------- | ---------------------------------------------------------- |
+| It's a **low-priority** level      | It's a **normal/high-priority** level                      |
+| You take **only 1 item**           | You take **all items (one per call)** until level is empty |
+| Counter is set to `1`              | Counter is set to the full length of that level            |
+*/
 
     public takeOut(): T | null {
         if (this.name_table.size === 0) return null;
@@ -92,7 +105,9 @@ abstract class Bag<T extends Item> {
             while (this.emptyLevel(this.current_level)) {
                 this.current_level = Bag.DISTRIBUTOR.pick(this.level_index);
                 this.level_index = Bag.DISTRIBUTOR.next(this.level_index);
+                
             }
+
             this.current_counter = this.current_level < Bag.THRESHOLD
                 ? 1
                 : this.item_table[this.current_level].length;

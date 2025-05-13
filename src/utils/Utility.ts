@@ -95,6 +95,13 @@ export function mean(...arr: number[]): number {
     return sum / arr.length;
 }
 
+export function mapToStringObject<T>(map: Map<string, T>): { [key: string]: string } {
+    const obj: { [key: string]: string } = {};
+    map.forEach((value, key) => {
+        obj[key] = String(value);
+    });
+    return obj;
+}
 
 // Export all utilities as a single object
 export const utility = {
@@ -102,6 +109,7 @@ export const utility = {
     hashString,
     average,
     or,
-    and, 
-    mean
+    and,
+    mean,
+    mapToStringObject
 } as const;

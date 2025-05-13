@@ -1,43 +1,40 @@
-
 {
 function makeTask(sentence, budget) {
-  let [priority, durability, quality] = budget ?? [null, null, null];
-  let p = priority, d = durability, q = quality;
-
-  const punctuation = sentence.getPunctuation();
-  const truth = sentence.getTruth();
-
+  // Extract budget values with proper defaults
   const defaults = {
-    [options.Punctuation.Judgement]: {
-      p: options.Config.p_judgement,
-      d: options.Config.d_judgement,
-      q: truth ? options.BudgetFunctions.truthToQuality(truth) : 1.0,
+    '.': { // Judgment
+      p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY || 0.9,
+      d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY || 0.9,
+      q: 1.0
     },
-    [options.Punctuation.Question]: {
-      p: options.Config.p_question,
-      d: options.Config.d_question,
-      q: 1.0,
+    '?': { // Question
+      p: options.Parameters.DEFAULT_QUESTION_PRIORITY || 0.9,
+      d: options.Parameters.DEFAULT_QUESTION_DURABILITY || 0.9,
+      q: 1.0
     },
-    [options.Punctuation.Quest]: {
-      p: options.Config.p_quest,
-      d: options.Config.d_quest,
-      q: 1.0,
-    },
-    [options.Punctuation.Goal]: {
-      p: options.Config.p_goal,
-      d: options.Config.d_goal,
-      q: truth ? options.BudgetFunctions.truthToQuality(truth) : 1.0,
-    },
+    '!': { // Goal
+      p: 0.9,
+      d: 0.9,
+      q: 1.0
+    }
   };
 
-  if (!p || !d || !q) {
-    const def = defaults[punctuation];
-    p = p ?? def.p;
-    d = d ?? def.d;
-    q = q ?? def.q;
-  }
+  // Get punctuation mark to determine defaults
+  const punct = sentence.getPunctuation();
+  const def = defaults[punct] || defaults['.'];
 
-  return new options.Task(sentence, new options.Budget(null, p, d, q));
+  // Use provided budget values or defaults
+  const [priority, durability, quality] = budget || [];
+  const p = priority ?? def.p;
+  const d = durability ?? def.d;
+  const q = quality ?? (sentence.getTruth() ? 
+    options.BudgetFunctions.truthToQuality(sentence.getTruth()) : 
+    def.q);
+
+  return new options.Task(
+    sentence, 
+    new options.Budget(null, p, d, q)
+  );
 }
 }
 /*********************

@@ -1,43 +1,57 @@
+import logger from '../utils/Logger';
 import { GeneralEngine } from './GeneralEngin';
 import { Memory } from './Memory';
 import { NarseseChannel } from './NarseseChannel';
+import { Stamp } from './Stamp';
+import { Task } from './Task';
 
-/**
- * Reasoner class for OpenNARS
- * Handles reasoning and inference using the General Engine
- */
-class Reasoner {
+export class Reasoner {
     private inference: GeneralEngine;
     private narsese_channel: NarseseChannel;
-    private memory: Memory;
+    private _memory: Memory;
+    private _clock: number = 0;
 
-    /**
-     * Create a new Reasoner instance
-     * @param config - Path to the configuration file (default: './config.json')
-     * @param nal_rules - Array of NAL rules (default: [1, 2, 3, 4, 5, 6, 7, 8, 9])
-     */
+
     constructor() {
         this.inference = new GeneralEngine();
-        this.narsese_channel = new NarseseChannel(); // Initialize Narsese channel
-        this.memory = new Memory(); 
+        this.narsese_channel = new NarseseChannel();
+        this._memory = new Memory();
+        Stamp.init();
     }
 
-    /**
-     * Processes input Narsese text and optionally runs a reasoning cycle
-     * @param text - The Narsese input text to process
-     * @param goCycle - Whether to run a reasoning cycle after input (default: false)
-     * @returns An array containing [success, task, taskOverflow]
-     */
-    inputNarsese(text: string, goCycle: boolean = false): [boolean, any, any] {
-        const [success, task, taskOverflow] = this.narsese_channel.put(text);
 
-        //FIXME
-        // if (goCycle) {
-        //     this.inference.cycle(); // Run a reasoning cycle if requested
-        // }
+    public get memory(): Memory {
+        return this._memory;
+    }
 
-        return [success, task, taskOverflow];
+    public get clock(): number {
+        return this._clock;
+    }
+    inputNarsese(text: string, goCycle: boolean = false): [boolean, Task | null, Task | null] {
+
+        // Check if the input can be converted to a valid number
+        if (!isNaN(Number(text.trim())) && text.trim() !== '') {
+            logger.console.info(`Input is a number: ${text.trim()}, walking the cycle.`);
+            // Convert cycles to number and run them
+            const cycles = parseInt(text.trim());
+            for (let i = 0; i < cycles; i++) {
+                this.memory.workCycle(this._clock);
+            }
+            return [true, null, null];
+        } else {
+            const [success, task, taskOverflow] = this.narsese_channel.put(text);
+            if (task) {
+                this.memory.input(task);
+                this.memory.workCycle(this._clock);
+            }
+            return [success, task, taskOverflow];
+        }
+
+
+
+    }
+
+    tick(): void {
+        this._clock++;
     }
 }
-
-export { Reasoner };

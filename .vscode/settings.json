@@ -62,7 +62,8 @@
         "Narsese",
         "opennars",
         "pegjs",
-        "punc"
+        "punc",
+        "subterms"
     ],
     "github.copilot.enable": {
         "*": true,

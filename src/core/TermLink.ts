@@ -1,7 +1,7 @@
-import { Item } from "./Item";
+ import { Link } from "./Link";
 
 
-class TermLink extends Item{
+class TermLink extends Link{
 
 }
 

@@ -1,17 +1,17 @@
 import { hashString } from '../utils/Utility';
 import { IndexVar } from './IndexVar';
-import { Config } from './Config';
+import { Parameters } from './Parameters';
 import { ImmutableOrderedSet } from './ImmutableOrderedSet';
 import { TermType } from './TermType';
 
 class Term {
     private name: string;
     private type: TermType;
-    private components: Set<Term> = new Set<Term>;
+    public components: Set<Term> = new Set<Term>;
 
     private _complexity: number = 1;
 
-    public is_variable : boolean = false;
+    public is_variable: boolean = false;
 
 
     constructor(name: string, type: TermType) {
@@ -69,7 +69,7 @@ class Term {
         return thisJSON === thatJSON;
     }
 
-    
+
     //MATH :: 
     public get simplicity(): number {
         return Math.max(0, Math.min(1, 1 / Math.sqrt(this.complexity)));
@@ -80,7 +80,7 @@ class Term {
     * Base complexity for atomic terms is 1
     * @returns number >= 1
     */
-    public  get complexity(): number {
+    public get complexity(): number {
         return this._complexity;
     }
 

@@ -10,7 +10,7 @@ class G extends Item {
 
 class M extends Bag<G> {
     constructor() {
-        super()
+        super(10)
     }
 }
 
@@ -19,9 +19,16 @@ let bag = new M();
 
 // Add items to the bag
 bag.putIn(new G("<a --> b>.", new Budget(undefined, 1.0, 0.5, 0.5)));
-bag.putIn(new G("<b --> c>.", new Budget(undefined, 0.5, 0.5, 0.5)));
+bag.putIn(new G("<b --> x>.", new Budget(undefined, 0.8, 0.5, 0.5)));
+bag.putIn(new G("<a --> d>.", new Budget(undefined, 1.0, 0.5, 0.5)));
+bag.putIn(new G("<b --> w>.", new Budget(undefined, 0.4, 0.5, 0.5)));
+bag.putIn(new G("<a --> e>.", new Budget(undefined, 1.0, 0.5, 0.5)));
+bag.putIn(new G("<b --> r>.", new Budget(undefined, 0.3, 0.5, 0.5)));
 
 // Pick out an item and store result
 let result: G | null = bag.pickOut("<a --> b>.");
-
+let takeout = bag.takeOut();
+let takeout2 = bag.takeOut();
+let takeout3 = bag.takeOut();
+let takeout4 = bag.takeOut();
 console.log(`${result}`);

@@ -48,6 +48,7 @@ class Item {
         this.budget.merge(that.getBudget()); 
     }
 
+    
 }
 
 export { Item };

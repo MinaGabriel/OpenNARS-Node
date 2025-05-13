@@ -1,9 +1,10 @@
+import logger from "../utils/Logger"
 import { Budget } from "./Budget"
 import { Concept } from "./Concept"
 import { Item } from "./Item"
 import { Task } from "./Task"
 import { Term } from "./Term"
-
+import { LinkType } from "./LinkType"
 /**
  * A Term can be:
  * - A simple atomic symbol (like A or B) → atomic term
@@ -35,27 +36,18 @@ class Link extends Item {
         this.copy_budget = copy_budget
         this.index = index
         this.type = undefined
+        this.setType(source_is_component, undefined, true)
+            
     }
 
 
     private setType(source_is_component?: boolean, type?: LinkType, enable_transform: boolean = false): void {
         const term_source: Term = this.source.getTerm();
-        const term_target: Term = this.target.sentence.getContent(); //Term 
-        //FIXME: if source_is_component is None: add this
-
-        if (source_is_component) {
-            if(term_target.identical(term_source)){
-                this.type = LinkType.SELF
-            }else if (term_target.isStatement) {
-
-                
-            }
-
-
-
-
-        }
+        const term_target: Term = this.target.sentence.getTerm(); 
     }
+
+    
+    
 }
 
 export { Link }

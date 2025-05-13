@@ -33,7 +33,7 @@ abstract class Sentence {
 
     }
 
-    public getContent(): Term {
+    public getTerm(): Term {
         return this.term;
     }
 
@@ -49,7 +49,7 @@ abstract class Sentence {
         return this.punctuation;
     }
 
-    public getTruth(): Truth | null {
+    public getTruth(): Truth {
         return this.truth;
     }
 
@@ -63,6 +63,10 @@ abstract class Sentence {
 
     public isRevisable(): boolean {
         return this.revisable;
+    }
+
+    public containQueryVariable(): boolean {
+        return this.term.getName().includes('?');
     }
 
     public toString(): string {

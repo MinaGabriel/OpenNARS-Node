@@ -5,6 +5,8 @@ class TaskLinkBag extends Bag<TaskLink>{
     constructor(){
         super();
     }
+
+    
 }
 
 export{TaskLinkBag}

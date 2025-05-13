@@ -11,11 +11,13 @@ It ensures:
 */
 
 export class ShortFloat {
-    // ! mean: "I promise that this property will definitely be assigned before it's accessed"
-    private readonly value!: number; // stores integer 0–10000
+    private value: number; // stores integer 0–10000
 
     constructor(v: number) {
-        this.setValue(v);
+        if (v < 0 || v > 1) {
+            throw new Error(`Invalid value: ${v}. Value must be between 0 and 1`);
+        }
+        this.value = Math.round(v * 10000);
     }
 
     public getValue(): number {
@@ -30,10 +32,7 @@ export class ShortFloat {
         if (v < 0 || v > 1) {
             throw new Error(`Invalid value: ${v}. Value must be between 0 and 1`);
         }
-        Object.defineProperty(this, 'value', {
-            value: Math.round(v * 10000),
-            writable: false
-        });
+        this.value = Math.round(v * 10000);
     }
 
     public equals(that: unknown): boolean {

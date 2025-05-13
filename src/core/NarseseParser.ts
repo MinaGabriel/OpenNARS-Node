@@ -4,10 +4,9 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-
 // Local imports
 import { Task } from './Task';
-import { Config } from './Config';
+import { Parameters } from './Parameters';
 import { Judgement } from './Judgement';
 import { Term } from './Term';
 import { Copula } from './Copula';
@@ -18,6 +17,7 @@ import { Punctuation } from './Punctuation';
 import { Budget } from './Budget';
 import { BudgetFunctions } from './BudgetFunctions';
 import { TermType } from './TermType';
+import logger from '../utils/Logger';
 /**
  * Parser class for Narsese language
  * Handles parsing of Narsese statements and converts them to Tasks
@@ -47,19 +47,17 @@ class NarseseParser {
      * @returns Parsed task object
      * @throws If parsing fails
      */
-    parse(input: string): Task {
-
-
+    parse(input: string): Task | null {
         try {
             const task = this.parser.parse(input, {
                 Term,
                 Copula,
                 Statement,
-                Config,
+                Parameters,
                 Budget,
-                BudgetFunctions, 
+                BudgetFunctions,
                 Judgement,
-                TermType, 
+                TermType,
                 Truth,
                 Tense,
                 Punctuation,
@@ -67,9 +65,8 @@ class NarseseParser {
             });
             // TODO: Implement the Buffer
             return task;
-        } catch (error: any) {
-            console.error('Parse error:', error.message);
-            throw new Error(`Failed to parse input: ${error.message}`);
+        } catch (error: any) {  
+            throw new Error('Parse error: ' + error.message);
         }
     }
 }

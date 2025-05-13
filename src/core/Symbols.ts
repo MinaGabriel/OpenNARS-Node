@@ -1,67 +1,71 @@
-class Symbols {
-    static readonly JUDGMENT_MARK = '.';
-    static readonly QUESTION_MARK = '?';
-    static readonly GOAL_MARK = '!';
+export class Symbols {
+    /* sentence type and delimiters */
+    public static readonly JUDGMENT_MARK = '.';
+    public static readonly QUESTION_MARK = '?';
 
-    static readonly BUDGET_VALUE_MARK = '$';
-    static readonly TRUTH_VALUE_MARK = '%';
-    static readonly VALUE_SEPARATOR = ';';
+    /* variable type */
+    public static readonly VAR_INDEPENDENT = '$';
+    public static readonly VAR_DEPENDENT = '#';
+    public static readonly VAR_QUERY = '?';
 
-    static readonly VARIABLE_TAG = '#';
-    static readonly QUERY_VARIABLE_TAG = '?';
-    static readonly OPERATOR_TAG = '^';
+    /* numerical value delimiters */
+    public static readonly BUDGET_VALUE_MARK = '$';
+    public static readonly TRUTH_VALUE_MARK = '%';
+    public static readonly VALUE_SEPARATOR = ';';
 
-    static readonly COMPOUND_TERM_OPENER = '(';
-    static readonly COMPOUND_TERM_CLOSER = ')';
-    static readonly STATEMENT_OPENER = '<';
-    static readonly STATEMENT_CLOSER = '>';
-    static readonly SET_EXT_OPENER = '{';
-    static readonly SET_EXT_CLOSER = '}';
-    static readonly SET_INT_OPENER = '[';
-    static readonly SET_INT_CLOSER = ']';
+    /* CompoundTerm delimiters */
+    public static readonly COMPOUND_TERM_OPENER = '(';
+    public static readonly COMPOUND_TERM_CLOSER = ')';
+    public static readonly STATEMENT_OPENER = '<';
+    public static readonly STATEMENT_CLOSER = '>';
+    public static readonly SET_EXT_OPENER = '{';
+    public static readonly SET_EXT_CLOSER = '}';
+    public static readonly SET_INT_OPENER = '[';
+    public static readonly SET_INT_CLOSER = ']';
 
-    static readonly ARGUMENT_SEPARATOR = ',';
-    static readonly IMAGE_PLACE_HOLDER = '_';
+    /* special characters in argument list */
+    public static readonly ARGUMENT_SEPARATOR = ',';
+    public static readonly IMAGE_PLACE_HOLDER = '_';
 
-    static readonly INTERSECTION_EXT_OPERATOR = '&';
-    static readonly INTERSECTION_INT_OPERATOR = '|';
-    static readonly DIFFERENCE_EXT_OPERATOR = '-';
-    static readonly DIFFERENCE_INT_OPERATOR = '~';
-    static readonly PRODUCT_OPERATOR = '*';
-    static readonly IMAGE_EXT_OPERATOR = '/';
-    static readonly IMAGE_INT_OPERATOR = '\\';
+    /* CompoundTerm operators */
+    public static readonly INTERSECTION_EXT_OPERATOR = "&";
+    public static readonly INTERSECTION_INT_OPERATOR = "|";
+    public static readonly DIFFERENCE_EXT_OPERATOR = "-";
+    public static readonly DIFFERENCE_INT_OPERATOR = "~";
+    public static readonly PRODUCT_OPERATOR = "*";
+    public static readonly IMAGE_EXT_OPERATOR = "/";
+    public static readonly IMAGE_INT_OPERATOR = "\\";
 
-    static readonly NEGATION_OPERATOR = '--';
-    static readonly DISJUNCTION_OPERATOR = '||';
-    static readonly CONJUNCTION_OPERATOR = '&&';
-    static readonly SEQUENCE_OPERATOR = '&/';
-    static readonly PARALLEL_OPERATOR = '&|';
-    static readonly FUTURE_OPERATOR = '/>';
-    static readonly PRESENT_OPERATOR = '|>';
-    static readonly PAST_OPERATOR = '\\>';
+    /* CompoundStatement operators */
+    public static readonly NEGATION_OPERATOR = "--";
+    public static readonly DISJUNCTION_OPERATOR = "||";
+    public static readonly CONJUNCTION_OPERATOR = "&&";
 
-    static readonly INHERITANCE_RELATION = '-->';
-    static readonly SIMILARITY_RELATION = '<->';
-    static readonly INSTANCE_RELATION = '{--';
-    static readonly PROPERTY_RELATION = '--]';
-    static readonly INSTANCE_PROPERTY_RELATION = '{-]';
-    static readonly IMPLICATION_RELATION = '==>';
-    static readonly EQUIVALENCE_RELATION = '<=>';
-    static readonly IMPLICATION_AFTER_RELATION = '=/>';
-    static readonly IMPLICATION_BEFORE_RELATION = '=\\>';
-    static readonly IMPLICATION_WHEN_RELATION = '=|>';
-    static readonly EQUIVALENCE_AFTER_RELATION = '</>';
-    static readonly EQUIVALENCE_WHEN_RELATION = '<|>';
+    /* built-in relations */
+    public static readonly INHERITANCE_RELATION = "-->";
+    public static readonly SIMILARITY_RELATION = "<->";
+    public static readonly INSTANCE_RELATION = "{--";
+    public static readonly PROPERTY_RELATION = "--]";
+    public static readonly INSTANCE_PROPERTY_RELATION = "{-]";
+    public static readonly IMPLICATION_RELATION = "==>";
+    public static readonly EQUIVALENCE_RELATION = "<=>";
 
-    static readonly Base_opener = ' {';
-    static readonly Base_closer = '} ';
-    static readonly Base_separator = ';';
-    static readonly Base_separator0 = ': ';
+    /* experience line prefix */
+    public static readonly INPUT_LINE = "IN";
+    public static readonly OUTPUT_LINE = "OUT";
+    public static readonly PREFIX_MARK = ':';
+    public static readonly RESET_MARK = '*';
+    public static readonly COMMENT_MARK = '/';
 
-    static readonly LinkToComponent_at1 = ' @(';
-    static readonly LinkToComponent_at2 = ') _ ';
-    static readonly LinkToCompound_at1 = ' _ @(';
-    static readonly LinkToCompound_at2 = ') ';
+    /* Stamp display only */
+    public static readonly STAMP_OPENER = '{';
+    public static readonly STAMP_CLOSER = '}';
+    public static readonly STAMP_SEPARATOR = ';';
+    public static readonly STAMP_STARTER = ':';
+
+    /* TermLink type display only */
+    public static readonly TO_COMPONENT_1 = " @(";
+    public static readonly TO_COMPONENT_2 = ")_ ";
+    public static readonly TO_COMPOUND_1 = " _@(";
+    public static readonly TO_COMPOUND_2 = ") ";
 }
-
-export {Symbols}

@@ -1,6 +1,8 @@
+import { add } from "winston";
 import { Bag } from "./Bag";
 import { Budget } from "./Budget";
 import { Item } from "./Item";
+import { Judgement } from "./Judgement";
 import { Sentence } from "./Sentence";
 import { Task } from "./Task";
 import { TaskLink } from "./TaskLink";
@@ -8,9 +10,10 @@ import { TaskLinkBag } from "./TaskLinkBag";
 import { Term } from "./Term";
 import { TermLink } from "./TermLink";
 import { TermLinkBag } from "./TermLinkBag";
+import { Parameters } from "./Parameters";
 
 class Concept extends Item {
-   
+
     private term: Term;
     private taskLinks: TaskLinkBag;
     private termLinks: TermLinkBag;
@@ -32,30 +35,42 @@ class Concept extends Item {
     public directProcess(task: Task): void {
         if (task.getSentence().isJudgement()) {
             this.processJudgment(task);
-        }else {
+        } else {
             this.processQuestion(task);
         }
+
+        //TODO: skipped the above threshold logic I don't understand it for now.
+
+        this.buildTaskLink(task);
+
     }
-    private processJudgment(task: Task): void { }
+
+    private buildTaskLink(task: Task): void {
+        const task_budget = task.getBudget(); 
+        
+    }
+
+
+    private addToTable(new_sentence: Sentence, table: Sentence[], capacity: number): void {
+        //TODO:: I skipped all the logic in this too
+        table.push(new_sentence);
+    }
+
+
+    private processJudgment(task: Task): void {
+        let judgment: Sentence = task.getSentence();
+        //TODO:: develop the old belief logic I am jumping to add to belief table
+        this.addToTable(judgment, this.beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
+
+    }
+
+    public toString(): string {
+        return `Concept ${this.term.getName()}`;
+    }
 
     private processQuestion(task: Task): void { }
 
 
-    /**
-     * Conceptualizes a task in the NARS memory system
-     * 
-     * Process:
-     * Checks if the task's concept exists in memory
-     *    - If exists: Merges the new concept with existing one
-     *    - If not: Creates a new concept and adds it to memory
-     *  
-     */
-    public static conceptualize(concepts: Bag<Concept>, term: Term, budget: Budget): void {
-        //TODO:: DEVELOP TEMPORAL 
-
-        if (term.is_variable) return;
- 
-    }
 }
 
 export { Concept }
