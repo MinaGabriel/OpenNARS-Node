@@ -1,30 +1,32 @@
 import { Reasoner } from './src/core/Reasoner';
-import logger from './src/utils/Logger';
 import promptSync from 'prompt-sync';
-
-
+import logger from './src/utils/Logger';
+import * as Utility from './src/utils/Utility';
+import { memoryStore } from './src/core/MemoryStore';
 
 const prompt = promptSync();
+
+// Initialize Reasoner and store it
 const nars = new Reasoner();
 
-logger.console.info("Welcome to the OpenNARS Shell! Starting system...");
-
-
 while (true) {
-    const input = prompt('> '); 
-    if (input.trim().toLowerCase() === 'exit') {
-        logger.console.info("User chose to exit. Shutting down.");
-        break;
-    }
-
-
-    const [success, task, overflow] = nars.inputNarsese(input, true);
-    if (!success) {
-        logger.console.error("Failed to process input.");
-    } else { 
-        logger.console.info(`Input processed. Success: ${success}`);
-    }
-
-    nars.tick();
-    logger.console.info(`Completed tick. Clock now at: ${nars.clock}`);
+  const input = prompt('> ');
+  switch (input.trim().toLowerCase()) {
+    case 'exit':
+      process.exit(0);
+    case 'time':
+      Utility.printTimeInfo();
+      continue;
+    case 'concepts':
+      Utility.conceptBagTableView();
+      continue;
+    default:
+      const [success, task, overflow] = nars.inputNarsese(input);
+      if (!success) {
+        logger.console.error('Failed to process input.');
+      } else {
+        logger.file.appendJson('Task', task);
+      }
+      continue;
+  }
 }

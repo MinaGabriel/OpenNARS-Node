@@ -1,12 +1,11 @@
 import { Bag } from "./Bag";
 import { TaskLink } from "./TaskLink";
 
-class TaskLinkBag extends Bag<TaskLink>{
-    constructor(){
+class TaskLinkBag extends Bag<TaskLink> {
+    constructor() {
         super();
     }
-
-    
+ 
 }
 
-export{TaskLinkBag}
+export { TaskLinkBag }

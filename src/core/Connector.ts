@@ -1,141 +1,130 @@
-/**
- * Connector class for handling logical and temporal connectors in NARS
- */
-class Connector {
-    // Enum for Connector Types
-    static Type = {
-        CONJUNCTION: 'CONJUNCTION',             // &&
-        DISJUNCTION: 'DISJUNCTION',             // ||
-        PRODUCT: 'PRODUCT',                     // *
-        PARALLEL_EVENTS: 'PARALLEL_EVENTS',     // &|
-        SEQUENTIAL_EVENTS: 'SEQUENTIAL_EVENTS', // &/
-        INTENSIONAL_INTERSECTION: 'INTENSIONAL_INTERSECTION', // |
-        EXTENSIONAL_INTERSECTION: 'EXTENSIONAL_INTERSECTION', // &
-        EXTENSIONAL_DIFFERENCE: 'EXTENSIONAL_DIFFERENCE',     // -
-        INTENSIONAL_DIFFERENCE: 'INTENSIONAL_DIFFERENCE',     // ~
-        NEGATION: 'NEGATION',                   // --
-        INTENSIONAL_SET: 'INTENSIONAL_SET',     // [
-        EXTENSIONAL_SET: 'EXTENSIONAL_SET',     // {
-        INTENSIONAL_IMAGE: 'INTENSIONAL_IMAGE', // \
-        EXTENSIONAL_IMAGE: 'EXTENSIONAL_IMAGE', // /
-        LIST: 'LIST'                            // #
-    } as const;
+import { ConnectorType } from './ConnectorType';
 
-    private type_: keyof typeof Connector.Type;
+export class Connector {
+  private _is_commutative: boolean;
+  private _is_product_or_image : boolean;
+  private _is_single_only: boolean;
+  private _is_double_only: boolean;
+  private _is_multiple_only: boolean;
+  private _is_temporal: boolean;
+  private _is_predictive: boolean;
+  private _is_concurrent: boolean;
+  private _atemporal_version: ConnectorType;
+  private _concurrent_version: ConnectorType;
+  private _predictive_version: ConnectorType;
 
-    /**
-     * Create a new Connector instance
-     * @param type - Type of the connector
-     */
-    constructor(type: keyof typeof Connector.Type) {
-        this.type_ = type;
-    }
+  constructor(public readonly type: ConnectorType) {
+    // Compute once and store
 
-    /**
-     * String representation of the connector
-     * @returns Symbolic representation of the connector
-     */
-    toString(): string {
-        switch (this.type_) {
-            case Connector.Type.CONJUNCTION: return "&&";
-            case Connector.Type.DISJUNCTION: return "||";
-            case Connector.Type.PRODUCT: return "*";
-            case Connector.Type.PARALLEL_EVENTS: return "&|";
-            case Connector.Type.SEQUENTIAL_EVENTS: return "&/";
-            case Connector.Type.INTENSIONAL_INTERSECTION: return "|";
-            case Connector.Type.EXTENSIONAL_INTERSECTION: return "&";
-            case Connector.Type.EXTENSIONAL_DIFFERENCE: return "-";
-            case Connector.Type.INTENSIONAL_DIFFERENCE: return "~";
-            case Connector.Type.NEGATION: return "--";
-            case Connector.Type.INTENSIONAL_SET: return "[";
-            case Connector.Type.EXTENSIONAL_SET: return "{";
-            case Connector.Type.INTENSIONAL_IMAGE: return "\\";
-            case Connector.Type.EXTENSIONAL_IMAGE: return "/";
-            case Connector.Type.LIST: return "#";
-            default: return "";
-        }
-    }
-    //FIXME:
+    this._is_commutative = [
+      ConnectorType.CONJUNCTION,
+      ConnectorType.DISJUNCTION,
+      ConnectorType.PARALLEL_EVENTS,
+      ConnectorType.INTENSIONAL_INTERSECTION,
+      ConnectorType.EXTENSIONAL_INTERSECTION,
+      ConnectorType.INTENSIONAL_SET,
+      ConnectorType.EXTENSIONAL_SET
+    ].includes(type);
 
-    // isCommutative(): boolean {
-    //     return [
-    //         Connector.Type.CONJUNCTION,
-    //         Connector.Type.DISJUNCTION,
-    //         Connector.Type.PARALLEL_EVENTS,
-    //         Connector.Type.INTENSIONAL_INTERSECTION,
-    //         Connector.Type.EXTENSIONAL_INTERSECTION,
-    //         Connector.Type.INTENSIONAL_SET,
-    //         Connector.Type.EXTENSIONAL_SET
-    //     ].includes(this.type_);
-    // }
+    this._is_single_only = type === ConnectorType.NEGATION;
 
-    isSingleOnly(): boolean {
-        return this.type_ === Connector.Type.NEGATION;
-    }
+    this._is_product_or_image = [
+      ConnectorType.PRODUCT,
+      ConnectorType.EXTENSIONAL_IMAGE,
+      ConnectorType.INTENSIONAL_IMAGE
+    ].includes(type);
 
-    isDoubleOnly(): boolean {
-        return this.type_ === Connector.Type.EXTENSIONAL_DIFFERENCE || this.type_ === Connector.Type.INTENSIONAL_DIFFERENCE;
-    }
+    this._is_double_only = [
+      ConnectorType.EXTENSIONAL_DIFFERENCE,
+      ConnectorType.INTENSIONAL_DIFFERENCE
+    ].includes(type);
 
-    // isMultipleOnly(): boolean {
-    //     return [
-    //         Connector.Type.CONJUNCTION,
-    //         Connector.Type.DISJUNCTION,
-    //         Connector.Type.PARALLEL_EVENTS,
-    //         Connector.Type.SEQUENTIAL_EVENTS,
-    //         Connector.Type.INTENSIONAL_INTERSECTION,
-    //         Connector.Type.EXTENSIONAL_INTERSECTION,
-    //         Connector.Type.EXTENSIONAL_DIFFERENCE,
-    //         Connector.Type.INTENSIONAL_DIFFERENCE,
-    //         Connector.Type.INTENSIONAL_IMAGE,
-    //         Connector.Type.EXTENSIONAL_IMAGE
-    //     ].includes(this.type_);
-    // }
+    this._is_multiple_only = [
+      ConnectorType.CONJUNCTION,
+      ConnectorType.DISJUNCTION,
+      ConnectorType.PARALLEL_EVENTS,
+      ConnectorType.SEQUENTIAL_EVENTS,
+      ConnectorType.INTENSIONAL_INTERSECTION,
+      ConnectorType.EXTENSIONAL_INTERSECTION,
+      ConnectorType.EXTENSIONAL_DIFFERENCE,
+      ConnectorType.INTENSIONAL_DIFFERENCE,
+      ConnectorType.INTENSIONAL_IMAGE,
+      ConnectorType.EXTENSIONAL_IMAGE
+    ].includes(type);
 
-    isTemporal(): boolean {
-        return this.type_ === Connector.Type.SEQUENTIAL_EVENTS || this.type_ === Connector.Type.PARALLEL_EVENTS;
-    }
+    this._is_temporal = [
+      ConnectorType.SEQUENTIAL_EVENTS,
+      ConnectorType.PARALLEL_EVENTS
+    ].includes(type);
 
-    isPredictive(): boolean {
-        return this.type_ === Connector.Type.SEQUENTIAL_EVENTS;
-    }
+    this._is_predictive = type === ConnectorType.SEQUENTIAL_EVENTS;
+    this._is_concurrent = type === ConnectorType.PARALLEL_EVENTS;
 
-    isConcurrent(): boolean {
-        return this.type_ === Connector.Type.PARALLEL_EVENTS;
-    }
+    this._atemporal_version = this._is_temporal ? ConnectorType.CONJUNCTION : type;
+    this._concurrent_version = type === ConnectorType.CONJUNCTION ? ConnectorType.PARALLEL_EVENTS : type;
+    this._predictive_version = type === ConnectorType.CONJUNCTION ? ConnectorType.SEQUENTIAL_EVENTS : type;
+  }
+ 
 
-    getAtemporal(): Connector {
-        if (this.type_ === Connector.Type.SEQUENTIAL_EVENTS || this.type_ === Connector.Type.PARALLEL_EVENTS) {
-            return new Connector(Connector.Type.CONJUNCTION);
-        }
-        return new Connector(this.type_);
-    }
+  /** Whether this connector is commutative (order doesn't matter) */
+  public get is_commutative(): boolean {
+    return this._is_commutative;
+  }
 
-    getConcurrent(): Connector {
-        if (this.type_ === Connector.Type.CONJUNCTION) {
-            return new Connector(Connector.Type.PARALLEL_EVENTS);
-        }
-        return new Connector(this.type_);
-    }
+  public get is_product_or_image(): boolean{
+    return this._is_product_or_image;
+  }
 
-    getPredictive(): Connector {
-        if (this.type_ === Connector.Type.CONJUNCTION) {
-            return new Connector(Connector.Type.SEQUENTIAL_EVENTS);
-        }
-        return new Connector(this.type_);
-    }
+  /** Whether this connector accepts only one term */
+  public get is_single_only(): boolean {
+    return this._is_single_only;
+  }
 
-    // checkValid(lenTerms: number): boolean {
-    //     if (this.isSingleOnly()) {
-    //         return lenTerms === 1;
-    //     } else if (this.isDoubleOnly()) {
-    //         return lenTerms === 2;
-    //     } else if (this.isMultipleOnly()) {
-    //         return lenTerms > 1;
-    //     } else {
-    //         return lenTerms > 0;
-    //     }
-    // }
+  /** Whether this connector accepts exactly two terms */
+  public get is_double_only(): boolean {
+    return this._is_double_only;
+  }
+
+  /** Whether this connector requires two or more terms */
+  public get is_multiple_only(): boolean {
+    return this._is_multiple_only;
+  }
+
+  /** Whether this connector implies time (sequential or parallel events) */
+  public get is_temporal(): boolean {
+    return this._is_temporal;
+  }
+
+  /** Whether this connector is specifically predictive (sequential events) */
+  public get is_predictive(): boolean {
+    return this._is_predictive;
+  }
+
+  /** Whether this connector implies concurrency (parallel events) */
+  public get is_concurrent(): boolean {
+    return this._is_concurrent;
+  }
+
+  /** Atemporal version of this connector (e.g., &/ → &&) */
+  public get atemporal_version(): ConnectorType {
+    return this._atemporal_version;
+  }
+
+  /** Concurrent version of this connector (e.g., && → &|) */
+  public get concurrent_version(): ConnectorType {
+    return this._concurrent_version;
+  }
+
+  /** Predictive version of this connector (e.g., && → &/) */
+  public get predictive_version(): ConnectorType {
+    return this._predictive_version;
+  }
+
+  /** Validate number of terms allowed with this connector */
+  public check_valid(len_terms: number): boolean {
+    if (this._is_single_only) return len_terms === 1;
+    if (this._is_double_only) return len_terms === 2;
+    if (this._is_multiple_only) return len_terms > 1;
+    return len_terms > 0;
+  }
 }
-
-export { Connector };

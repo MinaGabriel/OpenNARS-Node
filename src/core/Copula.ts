@@ -1,88 +1,59 @@
 /**
- * Copula class for handling logical relationships in NARS
+ * Refactored Copula class for use in NARS + PEG.js integration
  */
-enum CopulaType {
-    Inheritance = "-->",
-    Similarity = "<->",
-    Instance = "{--",
-    Property = "--]",
-    InstanceProperty = "{-]",
-    Implication = "==>",
-    PredictiveImplication = "=/>",
-    ConcurrentImplication = "=|>",
-    RetrospectiveImplication = "=\\>",
-    Equivalence = "<=>",
-    PredictiveEquivalence = "</>",
-    ConcurrentEquivalence = "<|>"
-}
 
-class Copula {
-    private readonly name: string;
-    private readonly symbol: string;
- 
-    constructor(name: string, symbol: string) {
-        this.name = name;
-        this.symbol = symbol;
+// Enum is no longer strictly needed if we use a lookup map
+const CopulaSymbols = {
+    "-->": "Inheritance",
+    "<->": "Similarity",
+    "{--": "Instance",
+    "--]": "Property",
+    "{-]": "InstanceProperty",
+    "==>": "Implication",
+    "=/>": "PredictiveImplication",
+    "=|>": "ConcurrentImplication",
+    "=\\>": "RetrospectiveImplication",
+    "<=>": "Equivalence",
+    "</>": "PredictiveEquivalence",
+    "<|>": "ConcurrentEquivalence"
+  } as const;
+  
+  export type CopulaSymbol = keyof typeof CopulaSymbols;
+  
+  export class Copula { 
+    public readonly symbol: CopulaSymbol;
+  
+    private constructor(name: string, symbol: CopulaSymbol) { 
+      this.symbol = symbol;
     }
- 
-    public getName(): string {
-        return this.name;
+  
+    toString(): string { return this.symbol; }
+  
+    public isHigherOrder(): boolean {
+      return [
+        "==>", "<=>", "=/>", "=|>", "=\\>", "</>", "<|>"
+      ].includes(this.symbol);
     }
-
-    public getSymbol(): string {
-        return this.symbol;
+  
+    public isInheritanceOrSimilarity(): boolean {
+      return this.symbol === "-->" || this.symbol === "<->";
     }
-
-    public toString(): string {
-        return this.symbol;
-    }
-
-    // Static instances
-    public static readonly Inheritance = new Copula("Inheritance", CopulaType.Inheritance);
-    public static readonly Similarity = new Copula("Similarity", CopulaType.Similarity);
-    public static readonly Instance = new Copula("Instance", CopulaType.Instance);
-    public static readonly Property = new Copula("Property", CopulaType.Property);
-    public static readonly InstanceProperty = new Copula("InstanceProperty", CopulaType.InstanceProperty);
-    public static readonly Implication = new Copula("Implication", CopulaType.Implication);
-    public static readonly PredictiveImplication = new Copula("PredictiveImplication", CopulaType.PredictiveImplication);
-    public static readonly ConcurrentImplication = new Copula("ConcurrentImplication", CopulaType.ConcurrentImplication);
-    public static readonly RetrospectiveImplication = new Copula("RetrospectiveImplication", CopulaType.RetrospectiveImplication);
-    public static readonly Equivalence = new Copula("Equivalence", CopulaType.Equivalence);
-    public static readonly PredictiveEquivalence = new Copula("PredictiveEquivalence", CopulaType.PredictiveEquivalence);
-    public static readonly ConcurrentEquivalence = new Copula("ConcurrentEquivalence", CopulaType.ConcurrentEquivalence);
-
-    public static values(): Copula[] {
-        return [
-            Copula.Inheritance,
-            Copula.Similarity,
-            Copula.Instance,
-            Copula.Property,
-            Copula.InstanceProperty,
-            Copula.Implication,
-            Copula.PredictiveImplication,
-            Copula.ConcurrentImplication,
-            Copula.RetrospectiveImplication,
-            Copula.Equivalence,
-            Copula.PredictiveEquivalence,
-            Copula.ConcurrentEquivalence
-        ];
-    }
-
+  
+    // Static map for quick lookup
+    private static symbolMap: Record<CopulaSymbol, Copula> = Object.entries(CopulaSymbols)
+      .reduce((map, [symbol, name]) => {
+        map[symbol as CopulaSymbol] = new Copula(name, symbol as CopulaSymbol);
+        return map;
+      }, {} as Record<CopulaSymbol, Copula>);
+  
     /**
      * Lookup Copula by symbol
      */
-    public static FromSymbol(symbol: string): Copula | undefined {
-        return Copula.values().find(c => c.getSymbol() === symbol);
+    public static fromSymbol(symbol: string): Copula | undefined {
+      return Copula.symbolMap[symbol as CopulaSymbol];
     }
-
-    /**
-     * Lookup Copula by name
-     */
-    public static FromName(name: string): Copula | undefined {
-        return Copula.values().find(c => c.getName() === name);
-    }
-
+  
     
-}
-
-export { Copula, CopulaType };
+  }
+  
+  // PEG.js Copula rule should call: Copula.fromSymbol(value)

@@ -4,51 +4,26 @@ import { Budget } from './Budget';
  * Base Item class for NARS system
  * Provides budget management and comparison functionality
  */
-class Item {
-
-    protected key: string;
-    protected  budget: Budget;
+abstract class Item {
+    protected _key: string;
+    protected _budget: Budget;
 
     constructor(key?: string, budget?: Budget) {
-        this.key = key ?? '';
-        this.budget = budget ? new Budget(budget) : new Budget();
+        this._key = key ?? '';
+        this._budget = budget ? new Budget(budget) : new Budget();
     }
+ 
+    get key(): string { return this._key; }
+    get budget(): Budget { return this._budget; }
+    get priority(): number { return this._budget.priority; }
+    get durability(): number { return this._budget.durability; }
+    get quality(): number { return this._budget.quality; }
+    set key(value: string) { this._key = value; }
+    set priority(value: number) { this._budget.priority = value; }
+    set durability(value: number) { this._budget.durability = value; }
+    set quality(value: number) { this._budget.quality = value; }
 
-    public getKey():string{
-        return this.key;
-    }
-
-    public getBudget() : Budget{
-        return this.budget;
-    }
-
-    public getPriority(): number{
-        return this.budget.getPriority();
-    }
-
-    public getDurability(): number{
-        return this.budget.getDurability();
-    }
-
-    public getQuality(): number{
-        return this.budget.getQuality();
-    } 
-
-    setPriority(priority: number) {
-        this.budget.setPriority(priority);
-    }
-    setDurability(durability: number) {
-        this.budget.setDurability(durability);
-    }
-    setQuality(quality: number) {
-        this.budget.setQuality(quality);
-    }
-
-    public merge(that : Item): void{
-        this.budget.merge(that.getBudget()); 
-    }
-
-    
+    merge(that: Item): void { this._budget.merge(that.budget); }
 }
 
 export { Item };

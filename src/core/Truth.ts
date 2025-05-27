@@ -6,6 +6,8 @@ class Truth {
 
     frequency: ShortFloat;
     confidence: ShortFloat;
+    //TOOBAD
+    k: number = 1;
 
     constructor(f: number, c: number) {
         this.frequency = new ShortFloat(f);

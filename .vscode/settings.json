@@ -1,70 +1,85 @@
 {
     "todo-tree.tree.showScanModeButton": true,
+
     "todo-tree.highlights.defaultHighlight": {
         "type": "text-and-comment",
         "foreground": "white"
     },
+
     "todo-tree.highlights.customHighlight": {
         "TODO": {
-            "background": "#d1c4e9", // Soft lavender
-            "iconColour": "#7e57c2", // Deep purple
-            "foreground": "black"
+            "background": "#E3F2FD", // Light sky blue
+            "iconColour": "#1565C0", // Medium blue
+            "foreground": "#0D47A1"  // Dark blue for contrast
+        },
+        "TOOBAD": {
+            "background": "#FFCDD2", // Soft red/pink
+            "iconColour": "#C62828", // Intense red
+            "foreground": "#B71C1C"
         },
         "FIXME": {
-            "background": "#f8bbd0", // Soft pink
-            "iconColour": "#e91e63", // Pink/red
-            "foreground": "black"
+            "background": "#FFF9C4", // Light yellow
+            "iconColour": "#F57F17", // Deep amber
+            "foreground": "#F57F17"
         },
         "NOTE": {
-            "background": "#bbdefb", // Soft light blue
-            "iconColour": "#1976d2", // Strong blue
-            "foreground": "black"
+            "background": "#C8E6C9", // Light green
+            "iconColour": "#2E7D32", // Deep green
+            "foreground": "#1B5E20"
         },
         "NARSESE": {
-            "background": "#ffe0b2", // Soft peach/orange
-            "iconColour": "#fb8c00", // Orange
-            "foreground": "black"
+            "background": "#FFE0B2", // Peach
+            "iconColour": "#EF6C00", // Deep orange
+            "foreground": "#E65100"
         },
         "TRACK": {
-            "background": "#c8e6c9", // Soft mint green
-            "iconColour": "#43a047", // Green
-            "foreground": "black"
+            "background": "#D1C4E9", // Soft purple
+            "iconColour": "#512DA8", // Deep violet
+            "foreground": "#311B92"
         },
         "IMPROVE": {
-            "background": "#3ad33f", // Soft mint green
-            "iconColour": "#43a047", // Green
-            "foreground": "black"
+            "background": "#B2EBF2", // Aqua
+            "iconColour": "#00838F", // Cyan blue
+            "foreground": "#006064"
         },
         "MATH": {
-            "background": "#f6faff", // Soft mint green
-            "iconColour": "#43a047", // Green
-            "foreground": "black"
-        },
+            "background": "#F3E5F5", // Light lavender
+            "iconColour": "#6A1B9A", // Strong purple
+            "foreground": "#4A148C"
+        }
     },
+
     "todo-tree.general.tags": [
         "TODO",
+        "TOOBAD",
         "FIXME",
         "NOTE",
         "NARSESE",
         "TRACK",
-        "IMPROVE", 
+        "IMPROVE",
         "MATH"
     ],
+
     "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+
     "todo-tree.tree.showBadges": true,
     "todo-tree.tree.grouped": true,
+
     "files.associations": {
         "*.ttml": "xml",
         "*.ttss": "css"
     },
+
     "cSpell.words": [
         "NARS",
         "Narsese",
         "opennars",
         "pegjs",
         "punc",
-        "subterms"
+        "subterms",
+        "TOOBAD"
     ],
+
     "github.copilot.enable": {
         "*": true,
         "plaintext": false,

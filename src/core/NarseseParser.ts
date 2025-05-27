@@ -1,9 +1,3 @@
-// Node.js built-ins
-import pegjs from 'pegjs';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
 // Local imports
 import { Task } from './Task';
 import { Parameters } from './Parameters';
@@ -16,8 +10,16 @@ import { Tense } from './Tense';
 import { Punctuation } from './Punctuation';
 import { Budget } from './Budget';
 import { BudgetFunctions } from './BudgetFunctions';
-import { TermType } from './TermType';
+import { TermType } from './TermType'; 
+import { Connector } from './Connector';
+import { ConnectorType } from './ConnectorType';
+import { Compound } from './Compound';
 import logger from '../utils/Logger';
+
+// Import the precompiled parser
+// @ts-ignore
+import narseseParser from './narsese_grammar.js'; //TODO:: USE --> npm run build:grammar
+
 /**
  * Parser class for Narsese language
  * Handles parsing of Narsese statements and converts them to Tasks
@@ -28,18 +30,14 @@ import logger from '../utils/Logger';
  * - Statement with truth: <bird --> animal>. %0.9;0.8%
  */
 class NarseseParser {
-    private parser: pegjs.Parser;
+    private parser: typeof narseseParser;
 
     /**
      * Initialize the parser with grammar and configuration
      */
     constructor() {
-        const grammarPath = join(__dirname, './narsese_grammar.pegjs');
-        const grammar = readFileSync(grammarPath, 'utf8');
-        this.parser = pegjs.generate(grammar);
+        this.parser = narseseParser;
     }
-
-
 
     /**
      * Parse Narsese input into a Task
@@ -62,13 +60,17 @@ class NarseseParser {
                 Tense,
                 Punctuation,
                 Task,
+                Connector,
+                ConnectorType,
+                Compound,
+                logger
             });
-            // TODO: Implement the Buffer
             return task;
-        } catch (error: any) {  
+        } catch (error: any) {
             throw new Error('Parse error: ' + error.message);
         }
     }
 }
 
 export { NarseseParser };
+

@@ -2,6 +2,8 @@ import winston from 'winston';
 import colors from 'colors';
 import fs from 'fs';
 import path from 'path';
+import stringify from "json-stringify-pretty-compact";
+
 
 // Setup log directory and file
 const logDir = './';
@@ -55,9 +57,8 @@ const logger = {
         info: (msg: string) => fileLogger.info(msg),
         warn: (msg: string) => fileLogger.warn(msg),
         error: (msg: string) => fileLogger.error(msg),
-        appendJson: (label: string, obj: any) => {
-            const jsonString = JSON.stringify(obj, null, 2);
-            fileLogger.info(`${label}:\n${jsonString}`);
+        appendJson: (label: string, obj: any) => { 
+            fileLogger.info(`${label}:\n${stringify(obj)}`);
         }
     }
 };

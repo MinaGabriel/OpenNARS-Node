@@ -9,16 +9,17 @@ import { Term } from './Term';
  * Extends the base Item class
  */
 class Task extends Item {
-    sentence: Sentence;
-    budget: Budget;
+    private _sentence: Sentence;
+    protected _budget: Budget;
 
     private _parent_task: Task | null = null;
-    public get parent_task(): Task | null {
-        return this._parent_task;
-    }
-    public set parent_task(value: Task | null) {
-        this._parent_task = value;
-    }
+
+    toString(): string { return `<Task ${this._sentence}>`; }
+    get sentence(): Sentence { return this._sentence; }
+    get term(): Term { return this._sentence.term; }
+    get parent_task(): Task | null { return this._parent_task; }
+    
+    set parent_task(value: Task | null) { this._parent_task = value; }
 
     // is input if the task is from the input channel
     public isInput(): boolean {
@@ -28,17 +29,10 @@ class Task extends Item {
     //NOTE: parser will call task with null budget if noting was provided
     constructor(sentence: Sentence, budget: Budget) {
         super(sentence.toString(), budget);
-        this.sentence = sentence;
-        this.budget = budget ?? new Budget();
-    }
-    public getSentence(): Sentence {
-        return this.sentence;
+        this._sentence = sentence;
+        this._budget = budget ?? new Budget();
     }
 
-    public getTerm(): Term {
-        return this.sentence.getTerm();
-    }
- 
 }
 
 export { Task };

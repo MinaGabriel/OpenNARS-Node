@@ -1,5 +1,21 @@
-
 import ansi from 'ansi-colors';
+import { Term } from '../core/Term';
+import { Bag } from '../core/Bag';
+import { Concept } from '../core/Concept';
+import { Budget } from '../core/Budget';
+import { table } from "table";
+import { TaskLink } from '../core/TaskLink';
+import _ from 'lodash';
+import colors from 'ansi-colors';
+import { TermLink } from '../core/TermLink';
+import { MemoryStore } from '../core/MemoryStore';
+import { Task } from '../core/Task';
+import { Sentence } from '../core/Sentence';
+import { Judgement } from '../core/Judgement';
+import { Goal } from '../core/Goal';
+import { Question } from '../core/Question';
+import { Truth } from '../core/Truth';
+import { ShortFloat } from './ShortFloat';
 
 // Define argument type for print function
 export type PrintArgs = {
@@ -103,6 +119,175 @@ export function mapToStringObject<T>(map: Map<string, T>): { [key: string]: stri
     return obj;
 }
 
+function formatDuration(ms: number): string {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}m ${seconds}s`;
+}
+
+export function printTimeInfo(): void {
+    const time = MemoryStore.getState().time;
+
+    const now = time.now();
+    const nowAbsolute = time.nowAbsolute();
+    const clock = time.narsClock();
+
+    const startTimestamp = new Date(nowAbsolute - now);
+    const startFormatted = startTimestamp.toLocaleString();
+
+    const data: string[][] = [
+        [colors.bold('Time Detail'), colors.bold('Value')],
+        ['Server Start Time', colors.green(startFormatted)],
+        ['Current Time', colors.cyan(new Date(nowAbsolute).toLocaleString())],
+        ['Uptime (ms)', colors.yellow(`${now}`)],
+        ['Uptime (formatted)', colors.yellow(formatDuration(now))],
+        ['Logical Clock Ticks', colors.magenta(`${clock}`)],
+    ];
+
+    console.log(table(data, {
+        header: { alignment: 'center', content: colors.bold.whiteBright('🟩 Runtime Diagnostics') },
+        columnDefault: { alignment: 'left' }
+    }));
+}
+//TOOBAD:: +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+function w_to_c(w: number, k: number): number {
+    return w / (w + k);
+}
+
+/**
+ * Eternalizes a temporal truth value.
+ * Reference:
+ * [1] OpenNARS 3.1.0 TruthFunctions.java line 485~490
+ * [2] Hammer et al., "The OpenNARS implementation of the non-axiomatic reasoning system."
+ * 
+ * $$c_{eternal} = \frac{1}{k + c_{temporal}}$$
+ * 
+ * @param truth - The temporal truth value to eternalize
+ * @returns The eternalized truth value
+ */
+
+export function eternalize(truth: Truth): Truth {
+    // Assuming w_to_c is a function that converts confidence and k to eternalized confidence
+    // and Truth is a class or type with constructor Truth(f, c, k)
+    return new Truth(Number(truth.frequency), w_to_c(Number(truth.confidence), Number(truth.k)));
+}
+
+/**
+ * Projects a temporal truth value from one time to another.
+ * Reference: p.172 Non-Axiomatic Logic — A Model of Intelligent Reasoning (Second Edition)
+ */
+export function project(truth: Truth, t_source: number, t_current: number, t_target: number): Truth {
+    const v = Math.abs(t_source - t_target);
+
+    let t_current_is_in_interval = false;
+    if (t_source < t_target) {
+        if (t_current >= t_source && t_current <= t_target) t_current_is_in_interval = true;
+    } else {
+        if (t_current <= t_source && t_current >= t_target) t_current_is_in_interval = true;
+    }
+
+    let s: number;
+    if (t_current_is_in_interval) {
+        s = 0.5;
+    } else {
+        s = Math.min(Math.abs(t_source - t_current), Math.abs(t_target - t_current));
+    }
+
+    const confidence_discount = 1 - v / (2 * s + v);
+    const c_new = Number(truth.confidence) * confidence_discount;
+    return new Truth(Number(truth.frequency), Number(c_new));
+}
+
+export function projectTruth(
+    premise1: Judgement | Goal | Question,
+    premise2: Judgement | Goal
+): any {
+    let truth = premise2.truth;
+    if (!premise2.stamp.isEternal) {
+        if (!premise1.stamp.isEternal) {
+            const t_target = premise1.stamp.occurrenceTime;
+            const t_source = premise2.stamp.occurrenceTime;
+            const narsClock = MemoryStore.getState().time.narsClock?.() ?? 0;
+            truth = project(truth, Number(t_source), narsClock, Number(t_target));
+        }
+        truth = eternalize(truth);
+    }
+    return truth;
+}
+
+
+export function solutionQuality(problem: Task, solution: Sentence, rateOfConfidence: boolean): number {
+    if (problem.sentence.punctuation != solution.punctuation && solution.term.hasVariableQuery) return 0.0;
+    let truth = solution.truth;
+
+    // time of problem occurrence 
+    const problemTime = problem.sentence.stamp.occurrenceTime;
+    const solutionTime = solution.stamp.occurrenceTime;
+    if (problemTime !== solutionTime) {
+        truth = projectTruth(problem.sentence, solution);
+    }
+    if (!rateOfConfidence) {
+        return truth.getExpectation();
+    } else {
+        return truth.confidence.getValue();
+    }
+
+}
+
+//TOOBAD:: +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+export function conceptBagTableView(): void {
+    const memory = MemoryStore.getState().memory;
+    const conceptBag = memory.conceptsBag; // Uses your getter
+
+    let data: string[][] = [];
+
+    conceptBag.item_table.forEach((conceptArray: Concept[], i) => {
+        conceptArray.forEach((concept: Concept, j) => {
+            const term = concept as unknown as Term;
+            const taskLinks = concept.taskLinks.item_table;
+            let taskLinkData: string[] = [];
+            let taskLinkBudget: string[] = [];
+
+            taskLinks.forEach((taskLinkArray: TaskLink[]) => {
+                taskLinkArray.forEach((taskLink: TaskLink) => {
+                    taskLinkData.push(`${taskLink}`);
+                    taskLinkBudget.push(`${colors.green(taskLink.budget.toString())}`);
+                });
+            });
+
+            const termLinkData: string[] = [];
+            const termLinkBudget: string[] = [];
+            const termLinks = concept.termLinks.item_table;
+
+            termLinks.forEach((termLinkArray: TermLink[]) => {
+                termLinkArray.forEach((termLink: TermLink) => {
+                    termLinkData.push(`${termLink}`);
+                    termLinkBudget.push(`${colors.red(termLink.budget.toString())}`);
+                });
+            });
+
+            data.push([
+                `${i},${j}`,
+                `${colors.bold(term.toString())} \n\n ${colors.blue(concept.budget.toString())}`,
+                _.flatten(_.concat(taskLinkData, termLinkData)).join('\n'),
+                _.flatten(_.concat(taskLinkBudget, termLinkBudget)).join('\n')
+            ]);
+        });
+    });
+
+    console.log(
+        table(data, {
+            header: { alignment: 'center', content: 'Concepts TABLE' }
+        })
+    );
+}
+
+
 // Export all utilities as a single object
 export const utility = {
     print,
@@ -111,5 +296,7 @@ export const utility = {
     or,
     and,
     mean,
-    mapToStringObject
+    mapToStringObject,
+    conceptBagTableView,
+    projectTruth
 } as const;

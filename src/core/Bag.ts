@@ -12,7 +12,7 @@ abstract class Bag<T extends Item> {
     protected static readonly DISTRIBUTOR: Distributor = new Distributor(Bag.TOTAL_LEVEL);
 
     protected name_table: Map<string, T>;
-    protected item_table: Array<Array<T>>;
+    protected _item_table: Array<Array<T>>;
     protected capacity: number;
     protected forget_rate: number;
     protected mass: number;
@@ -25,7 +25,7 @@ abstract class Bag<T extends Item> {
         this.capacity = capacity;
         this.forget_rate = forget_rate;
         this.name_table = new Map<string, T>();
-        this.item_table = Array.from({ length: Bag.TOTAL_LEVEL }, () => []);
+        this._item_table = Array.from({ length: Bag.TOTAL_LEVEL }, () => []);
         this.mass = 0;
         this.level_index = capacity % Bag.TOTAL_LEVEL;
         this.current_level = Bag.TOTAL_LEVEL - 1;
@@ -34,13 +34,14 @@ abstract class Bag<T extends Item> {
     }
 
     public init(): void {
-        this.item_table = Array.from({ length: Bag.TOTAL_LEVEL }, () => []);
+        this._item_table = Array.from({ length: Bag.TOTAL_LEVEL }, () => []);
         this.name_table.clear();
         this.current_level = Bag.TOTAL_LEVEL - 1;
         this.level_index = this.capacity % Bag.TOTAL_LEVEL;
         this.mass = 0;
         this.current_counter = 0;
     }
+    get item_table(): Array<Array<T>> { return this._item_table;}
 
     public size(): number {
         return this.name_table.size;
@@ -60,8 +61,10 @@ abstract class Bag<T extends Item> {
         return this.name_table.get(key);
     }
 
+    
+
     public putIn(newItem: T): boolean {
-        const newKey = newItem.getKey(); // The key is the name of the item
+        const newKey = newItem.key; // The key is the name of the item
         const oldItem = this.name_table.get(newKey);
         
 
@@ -74,7 +77,7 @@ abstract class Bag<T extends Item> {
         this.name_table.set(newKey, newItem);
 
         if (overflowItem) {
-            this.name_table.delete(overflowItem.getKey());
+            this.name_table.delete(overflowItem.key);
             return overflowItem !== newItem;
         }
         
@@ -84,7 +87,7 @@ abstract class Bag<T extends Item> {
     }
 
     public putBack(oldItem: T): boolean {
-        BudgetFunctions.forget(oldItem.getBudget(), this.forget_rate, Bag.RELATIVE_THRESHOLD);
+        BudgetFunctions.forget(oldItem.budget, this.forget_rate, Bag.RELATIVE_THRESHOLD);
         return this.putIn(oldItem);
     }
 
@@ -114,7 +117,7 @@ abstract class Bag<T extends Item> {
         }
 
         const selected = this.takeOutFirst(this.current_level);
-        this.name_table.delete(selected.getKey());
+        this.name_table.delete(selected.key);
         this.current_counter--;
         return selected;
     }
@@ -133,7 +136,7 @@ abstract class Bag<T extends Item> {
     }
 
     private getLevel(item: T): number {
-        const level = Math.ceil(item.getPriority() * Bag.TOTAL_LEVEL) - 1;
+        const level = Math.ceil(item.priority * Bag.TOTAL_LEVEL) - 1;
         return level < 0 ? 0 : level;
     }
 

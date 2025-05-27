@@ -9,13 +9,13 @@ import { Tense } from './Tense';
  * Base for Judgement, Goal, Question
  */
 abstract class Sentence {
-    protected readonly term: Term;
-    protected readonly punctuation: Punctuation;
-    protected readonly truth: Truth;
-    protected readonly stamp: Stamp;
-    protected readonly tense: Tense;
-    protected readonly revisable: boolean;
-
+    protected readonly _term: Term;
+    protected readonly _punctuation: Punctuation;
+    protected readonly _truth: Truth;
+    protected readonly _stamp: Stamp;
+    protected readonly _tense: Tense;
+    protected readonly _revisable: boolean;
+   
     constructor(
         term: Term,
         punctuation: Punctuation,
@@ -24,58 +24,58 @@ abstract class Sentence {
         tense: Tense,
         revisable: boolean = true
     ) {
-        this.term = term;
-        this.punctuation = punctuation;
-        this.truth = truth;
-        this.stamp = stamp;
-        this.tense = tense;
-        this.revisable = revisable;
-
+        this._term = term;
+        this._punctuation = punctuation;
+        this._truth = truth;
+        this._stamp = stamp;
+        this._tense = tense;
+        this._revisable = revisable;
     }
 
-    public getTerm(): Term {
-        return this.term;
+    /** ========== GETTERS ========== */
+    get term(): Term {
+        return this._term;
     }
 
-    public isQuestion(): boolean {
-        return this.punctuation == Punctuation.QUESTION;
-    }
-    public isJudgement(): boolean {
-        return this.punctuation == Punctuation.JUDGMENT;
+    get punctuation(): Punctuation {
+        return this._punctuation;
     }
 
-
-    public getPunctuation(): Punctuation {
-        return this.punctuation;
+    get truth(): Truth {
+        return this._truth;
     }
 
-    public getTruth(): Truth {
-        return this.truth;
+    get stamp(): Stamp {
+        return this._stamp;
     }
 
-    public getStamp(): Stamp {
-        return this.stamp;
+    get tense(): Tense {
+        return this._tense;
     }
 
-    public getTense(): Tense {
-        return this.tense;
+    get revisable(): boolean {
+        return this._revisable;
     }
 
-    public isRevisable(): boolean {
-        return this.revisable;
-    }
 
-    public containQueryVariable(): boolean {
-        return this.term.getName().includes('?');
-    }
-
-    public toString(): string {
+    /** ========== METHODS ========== */
+    toString(): string {
         return [
             this.term.toString(),
-            this.punctuation.toString() + ' ',
-            this.truth?.toString(),
-            this.stamp?.toString()
+            this.punctuation.toString()
         ].filter(Boolean).join(' ');
+    }
+
+    isQuestion(): boolean {
+        return this._punctuation === Punctuation.QUESTION;
+    }
+
+    isJudgement(): boolean {
+        return this._punctuation === Punctuation.JUDGMENT;
+    }
+
+    containQueryVariable(): boolean {
+        return this._term.name.includes('?');
     }
 }
 
