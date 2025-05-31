@@ -1,5 +1,5 @@
 import { Concept } from './Concept';
-import { LinkType } from './LinkType';
+import { LinkType } from './Enums';
 import { MemoryStore } from './MemoryStore';
 import { TaskLink } from './TaskLink';
 import { Term } from './Term';

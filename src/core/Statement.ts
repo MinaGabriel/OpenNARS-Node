@@ -1,9 +1,7 @@
 import { Term } from './Term';
 import { Copula } from './Copula';
 import { ImmutableOrderedSet } from './ImmutableOrderedSet';
-import { TermType } from './TermType';
-import logger from '../utils/Logger';
-
+import { TermType } from './Enums'; 
 /**
  * Statement class representing a NAL statement with subject, copula, and predicate
  * @extends Term

@@ -1,12 +1,19 @@
-import { ShortFloat } from '../utils/ShortFloat';
+import { Identifiable } from './interfaces/Identifiable';
+import { ShortFloat } from './ShortFloat';
 import { Symbols } from './Symbols';
-class Truth {
+import numeral from 'numeral';
+
+/**
+ * Represents a truth value with frequency and confidence.
+ * Implements NARS truth value logic.
+ */
+export class Truth implements Identifiable {
     delimiter: string = Symbols.TRUTH_VALUE_MARK;
     separator: string = Symbols.VALUE_SEPARATOR;
 
     frequency: ShortFloat;
     confidence: ShortFloat;
-    //TOOBAD
+    // k is a constant used in the expectation calculation, defaulting to 1
     k: number = 1;
 
     constructor(f: number, c: number) {
@@ -14,26 +21,58 @@ class Truth {
         this.confidence = new ShortFloat(c);
     }
 
+    /**
+     * Returns a formatted string representation of the truth value.
+     */
+    name(): string {
+        return `${this.delimiter}${numeral(this.frequency).format('0.00')}${this.separator}${numeral(this.confidence).format('0.00')}${this.delimiter}`;
+    }
+
+    /**
+     * Returns the string representation of the truth value.
+     */
+    toString(): string {
+        return this.name();
+    }
+
+    /**
+     * Gets the frequency as a number.
+     */
     public getFrequency(): number {
         return this.frequency.getValue();
     }
 
+    /**
+     * Gets the confidence as a number.
+     */
     public getConfidence(): number {
         return this.confidence.getValue();
     }
 
+    /**
+     * Calculates the expectation value.
+     */
     public getExpectation(): number {
-        return this.confidence.getValue() * (this.frequency.getValue() - 0.5) + 0.5;
+        return this.getConfidence() * (this.getFrequency() - 0.5) + 0.5;
     }
 
+    /**
+     * Returns the absolute difference between a given expectation and this truth's expectation.
+     */
     public getExpDifAbs(e: number): number {
         return Math.abs(e - this.getExpectation());
     }
 
+    /**
+     * Returns the absolute difference between this and another truth's expectation.
+     */
     public getExpDifAbsFromTruth(t: Truth): number {
         return this.getExpDifAbs(t.getExpectation());
     }
 
+    /**
+     * Checks if another object is a Truth and has the same frequency and confidence.
+     */
     public equals(that: unknown): boolean {
         return (
             that instanceof Truth &&
@@ -41,17 +80,5 @@ class Truth {
             this.getConfidence() === that.getConfidence()
         );
     }
-
-    public toString(): string {
-        return (
-            this.delimiter +
-            this.frequency.toString() +
-            this.separator +
-            this.confidence.toString() +
-            this.delimiter
-        );
-    }
-
 }
 
-export { Truth };

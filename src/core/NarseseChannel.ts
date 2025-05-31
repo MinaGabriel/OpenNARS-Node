@@ -1,4 +1,6 @@
+import { MemoryStore } from './MemoryStore';
 import { NarseseParser } from './NarseseParser';
+import { Parameters } from './Parameters';
 import { Task } from './Task';
 
 /**
@@ -25,6 +27,12 @@ class NarseseChannel {
         try {
             // Parse the input text
             const task = this.parser.parse(text);
+            //If Sentence is not eternal set occurrence time. 
+            if (task && !task.sentence.isEternal()) {
+                task.sentence.stamp.setOccurrenceTime(MemoryStore.getState().time.narsClock());
+            }
+            task?.sentence.stamp.setCreationTime(MemoryStore.getState().time.narsClock(), Parameters.DURATION);
+
             return [true, task, null];
         } catch (error) {
             console.error('Error parsing Narsese input:', error);

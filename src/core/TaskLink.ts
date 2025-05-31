@@ -4,7 +4,7 @@ import { Concept } from "./Concept";
 import { Link } from "./Link";
 import { Task } from "./Task";
 import { TermLink } from "./TermLink";
-import { LinkType } from "./LinkType";
+import { LinkType } from "./Enums";
 import colors from "ansi-colors";
 import { MemoryStore } from './MemoryStore'; // adjust the path as needed
 

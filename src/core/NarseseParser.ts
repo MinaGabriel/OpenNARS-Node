@@ -1,4 +1,4 @@
-// Local imports
+// ───── Imports ─────
 import { Task } from './Task';
 import { Parameters } from './Parameters';
 import { Judgement } from './Judgement';
@@ -6,23 +6,18 @@ import { Term } from './Term';
 import { Copula } from './Copula';
 import { Statement } from './Statement';
 import { Truth } from './Truth';
-import { Tense } from './Tense';
-import { Punctuation } from './Punctuation';
-import { Budget } from './Budget';
-import { BudgetFunctions } from './BudgetFunctions';
-import { TermType } from './TermType'; 
+import { Tense, Punctuation, TermType, ConnectorType } from './Enums';
+import { Budget } from './Budget'; 
 import { Connector } from './Connector';
-import { ConnectorType } from './ConnectorType';
-import { Compound } from './Compound';
-import logger from '../utils/Logger';
-
+import { Compound } from './Compound'; 
+import { System } from './Functions';
 // Import the precompiled parser
 // @ts-ignore
-import narseseParser from './narsese_grammar.js'; //TODO:: USE --> npm run build:grammar
+import narseseParser from './narsese_grammar.js'; // TODO: Use --> npm run build:grammar
 
 /**
- * Parser class for Narsese language
- * Handles parsing of Narsese statements and converts them to Tasks
+ * Parser class for Narsese language.
+ * Handles parsing of Narsese statements and converts them to Tasks.
  * 
  * Examples:
  * - Simple statement: <bird --> animal>
@@ -33,16 +28,16 @@ class NarseseParser {
     private parser: typeof narseseParser;
 
     /**
-     * Initialize the parser with grammar and configuration
+     * Initialize the parser with grammar and configuration.
      */
     constructor() {
         this.parser = narseseParser;
     }
 
     /**
-     * Parse Narsese input into a Task
+     * Parse Narsese input into a Task.
      * @param input - Narsese statement to parse
-     * @returns Parsed task object
+     * @returns Parsed Task object or null
      * @throws If parsing fails
      */
     parse(input: string): Task | null {
@@ -52,8 +47,7 @@ class NarseseParser {
                 Copula,
                 Statement,
                 Parameters,
-                Budget,
-                BudgetFunctions,
+                Budget, 
                 Judgement,
                 TermType,
                 Truth,
@@ -61,10 +55,12 @@ class NarseseParser {
                 Punctuation,
                 Task,
                 Connector,
+                System,
                 ConnectorType,
-                Compound,
-                logger
+                Compound, 
             });
+
+            //ParseTruth if null 
             return task;
         } catch (error: any) {
             throw new Error('Parse error: ' + error.message);

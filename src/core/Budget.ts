@@ -1,19 +1,15 @@
-import { utility } from "../utils/Utility";
-import { BudgetFunctions } from "./BudgetFunctions";
-import { Memory } from "./Memory";
-import { ShortFloat } from "../utils/ShortFloat";
+import { System } from './Functions'; 
+import { ShortFloat } from "./ShortFloat";
 import { Symbols } from "./Symbols";
 
-class Budget extends BudgetFunctions {
+class Budget {
     private mark: string = Symbols.BUDGET_VALUE_MARK;
     private separator: string = Symbols.VALUE_SEPARATOR;
     private _priority: ShortFloat;
     private _durability: ShortFloat;
     private _quality: ShortFloat;
-    private budgetFunctions: BudgetFunctions;
 
     constructor(budget?: Budget, p?: number, d?: number, q?: number) {
-        super();
         if (budget) {
             this._priority = new ShortFloat(budget.priority);
             this._durability = new ShortFloat(budget.durability);
@@ -23,7 +19,6 @@ class Budget extends BudgetFunctions {
             this._durability = new ShortFloat(d ?? 0.01);
             this._quality = new ShortFloat(q ?? 0.01);
         }
-        this.budgetFunctions = new BudgetFunctions();
     }
 
     get priority(): number { return this._priority.getValue(); }
@@ -37,36 +32,36 @@ class Budget extends BudgetFunctions {
 
     // Increase priority using probabilistic OR (noisy-OR)
     public increasePriority(newValue: number): void {
-        this.priority = utility.or(this.priority, newValue);
+        this.priority = System.Math.or(this.priority, newValue);
     }
 
     // Decrease priority using probabilistic AND (noisy-AND)
     public decreasePriority(newValue: number): void {
-        this.priority = utility.and(this.priority, newValue);
+        this.priority = System.Math.and(this.priority, newValue);
     }
 
     public increaseQuality(newValue: number): void {
-        this.quality = utility.or(this.quality, newValue);
+        this.quality = System.Math.or(this.quality, newValue);
     }
 
     public decreaseQuality(newValue: number): void {
-        this.quality = utility.and(this.quality, newValue);
+        this.quality = System.Math.and(this.quality, newValue);
     }
 
     public increaseDurability(newValue: number): void {
-        this.durability = utility.or(this.durability, newValue);
+        this.durability = System.Math.or(this.durability, newValue);
     }
 
     public decreaseDurability(newValue: number): void {
-        this.durability = utility.and(this.durability, newValue);
+        this.durability = System.Math.and(this.durability, newValue);
     }
 
     public merge(that: Budget): void {
-        BudgetFunctions.merge(this, that);
+        System.Budget.merge(this, that);
     }
 
     public singleValue(): number {
-        return utility.average(this.priority, this.durability, this.quality);
+        return System.Math.average(this.priority, this.durability, this.quality);
     }
 
     public aboveThreshold(): boolean {

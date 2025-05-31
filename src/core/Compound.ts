@@ -1,8 +1,8 @@
 import { OrderedSet } from "immutable";
 import { Connector } from "./Connector";
-import { ConnectorType } from "./ConnectorType";
+import { ConnectorType } from "./Enums";
 import { Term } from "./Term";
-import { TermType } from "./TermType";
+import { TermType } from "./Enums";
 import { ImmutableOrderedSet } from "./ImmutableOrderedSet";
 
 

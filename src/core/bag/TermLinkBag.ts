@@ -1,5 +1,5 @@
 import { Bag } from "./Bag"
-import { TermLink } from "./TermLink"
+import { TermLink } from "../TermLink"
 
 
 class TermLinkBag extends Bag<TermLink>{

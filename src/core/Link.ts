@@ -1,15 +1,11 @@
-import logger from "../utils/Logger";
 import { Budget } from "./Budget";
 import { Concept } from "./Concept";
 import { Item } from "./Item";
 import { Task } from "./Task";
 import { Term } from "./Term";
-import { LinkType } from "./LinkType";
+import { LinkType } from "./Enums";
 import { Statement } from "./Statement";
 import { Compound } from "./Compound";
-import { Connector } from "./Connector";
-import { ConnectorType } from "./ConnectorType";
-import { hashString } from "../utils/Utility";
 import { nanoid } from "nanoid";
 
 /**
@@ -61,7 +57,7 @@ abstract class Link extends Item {
                 this.type = LinkType.SELF;
             }
 
-            if (termTarget.isStatement) {
+            if (termTarget.isStatement()) {
                 const statementTarget: Statement = termTarget as Statement;
 
                 // If source and target are identical, it's a self-link
@@ -74,7 +70,7 @@ abstract class Link extends Item {
                 if (this.terms.length >= 3 && enableTransform) {
                     const parentParent: Term = this.terms[this.terms.length - 3];
                     const parent: Term = this.terms[this.terms.length - 2];
-                    if (parentParent.isStatement && parent.isCompound) {
+                    if (parentParent.isStatement() && parent.isCompound()) {
                         if ((parent as Compound).connector.is_product_or_image) {
                             this.type = LinkType.TRANSFORM;
                             return;
@@ -92,7 +88,7 @@ abstract class Link extends Item {
                 } else if (statementTarget.copula.isInheritanceOrSimilarity()) {
                     this.type = LinkType.COMPONENT_STATEMENT;
                 }
-            } else if (termTarget.isCompound) {
+            } else if (termTarget.isCompound()) {
                 this.type = LinkType.COMPOUND;
             }
         } else { // source is not nested in target
@@ -104,7 +100,7 @@ abstract class Link extends Item {
             // 2. if source is compound --> COMPOUND
             // 3. none.
 
-            if (termSource.isStatement) {
+            if (termSource.isStatement()) {
                 const statementSource: Statement = termSource as Statement;
                 if (statementSource.copula.isHigherOrder()) {
                     if (termTarget.identical(termSource)) {
@@ -115,7 +111,7 @@ abstract class Link extends Item {
                 } else if (statementSource.copula.isInheritanceOrSimilarity()) {
                     this.type = LinkType.COMPONENT_STATEMENT;
                 }
-            } else if (termSource.isCompound) {
+            } else if (termSource.isCompound()) {
                 this.type = LinkType.COMPOUND;
             }
         }

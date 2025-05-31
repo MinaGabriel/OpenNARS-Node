@@ -1,9 +1,6 @@
-import { Item } from "./Item";
-import { Distributor } from "./Distributor";
-import { BudgetFunctions } from "./BudgetFunctions";
-import Logger from "../utils/Logger";
-import * as Utility from "../utils/Utility";
-
+import { Item } from "../Item";
+import { Distributor } from "../Distributor";
+import { System } from '../Functions';
 abstract class Bag<T extends Item> {
     protected static readonly TOTAL_LEVEL: number = 100;
     protected static readonly THRESHOLD: number = 10;
@@ -41,7 +38,7 @@ abstract class Bag<T extends Item> {
         this.mass = 0;
         this.current_counter = 0;
     }
-    get item_table(): Array<Array<T>> { return this._item_table;}
+    get item_table(): Array<Array<T>> { return this._item_table; }
 
     public size(): number {
         return this.name_table.size;
@@ -61,12 +58,15 @@ abstract class Bag<T extends Item> {
         return this.name_table.get(key);
     }
 
-    
+    public toArray(): T[] {
+        return this._item_table.flat();
+    }
+
 
     public putIn(newItem: T): boolean {
         const newKey = newItem.key; // The key is the name of the item
         const oldItem = this.name_table.get(newKey);
-        
+
 
         if (oldItem) {
             this.outOfBase(oldItem);
@@ -80,14 +80,14 @@ abstract class Bag<T extends Item> {
             this.name_table.delete(overflowItem.key);
             return overflowItem !== newItem;
         }
-        
-        Logger.file.appendJson("name table ", Utility.mapToStringObject(this.name_table));
+
+        System.Log.appendJson("name table ", System.String.mapToStringObject(this.name_table));
 
         return true;
     }
 
     public putBack(oldItem: T): boolean {
-        BudgetFunctions.forget(oldItem.budget, this.forget_rate, Bag.RELATIVE_THRESHOLD);
+        System.Budget.forget(oldItem.budget, this.forget_rate, Bag.RELATIVE_THRESHOLD);
         return this.putIn(oldItem);
     }
 
@@ -108,7 +108,7 @@ abstract class Bag<T extends Item> {
             while (this.emptyLevel(this.current_level)) {
                 this.current_level = Bag.DISTRIBUTOR.pick(this.level_index);
                 this.level_index = Bag.DISTRIBUTOR.next(this.level_index);
-                
+
             }
 
             this.current_counter = this.current_level < Bag.THRESHOLD
@@ -129,6 +129,10 @@ abstract class Bag<T extends Item> {
             this.name_table.delete(key);
         }
         return picked || null;
+    }
+
+    public peek(key: string): T | null {
+        return this.name_table.get(key) || null;
     }
 
     protected emptyLevel(n: number): boolean {

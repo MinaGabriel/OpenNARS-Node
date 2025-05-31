@@ -1,7 +1,7 @@
-/* 
+/*
  * The MIT License
  *
- * Copyright 2019 The OpenNARS authors.
+ * Copyright 2018 The OpenNARS authors.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,78 +22,93 @@
  * THE SOFTWARE.
  */
 
-/**
- * Collected system parameters. To be modified before compiling.
- */
 export class Parameters {
-    /* ---------- initial values of run-time adjustable parameters ---------- */
-    /** Concept decay rate in ConceptBag, in [1, 99]. */
-    public static readonly CONCEPT_FORGETTING_CYCLE: number = 10;
-    /** TaskLink decay rate in TaskLinkBag, in [1, 99]. */
-    public static readonly TASK_LINK_FORGETTING_CYCLE: number = 20;
-    /** TermLink decay rate in TermLinkBag, in [1, 99]. */
-    public static readonly TERM_LINK_FORGETTING_CYCLE: number = 50;
-    /** Silent threshold for task reporting, in [0, 100]. */
-    public static readonly SILENT_LEVEL: number = 0;
-
-    /* ---------- time management ---------- */
-    /** Task decay rate in TaskBuffer, in [1, 99]. */
-    public static readonly NEW_TASK_FORGETTING_CYCLE: number = 1;
-    /** Maximum TermLinks checked for novelty for each TaskLink in TermLinkBag */
-    public static readonly MAX_MATCHED_TERM_LINK: number = 10;
-    /** Maximum TermLinks used in reasoning for each Task in Concept */
-    public static readonly MAX_REASONED_TERM_LINK: number = 3;
-
-    /* ---------- logical parameters ---------- */
-    /** Evidential Horizon, the amount of future evidence to be considered. */
-    public static readonly HORIZON: number = 1;
-    /** Reliance factor, the empirical confidence of analytical truth. */
-    public static readonly RELIANCE: number = 0.9;
-
-    /* ---------- budget thresholds ---------- */
-    /** The budget threshold rate for task to be accepted. */
-    public static readonly BUDGET_THRESHOLD: number = 0.01;
-
-    /* ---------- default input values ---------- */
-    /** Default expectation for confirmation. */
-    public static readonly DEFAULT_CONFIRMATION_EXPECTATION: number = 0.8;
-    /** Default expectation for creation. */
-    public static readonly DEFAULT_CREATION_EXPECTATION: number = 0.66;
-    /** Default confidence of input judgment. */
-    public static readonly DEFAULT_JUDGMENT_CONFIDENCE: number = 0.9;
-    /** Default priority of input judgment */
-    public static readonly DEFAULT_JUDGMENT_PRIORITY: number = 0.8;
-    /** Default durability of input judgment */
-    public static readonly DEFAULT_JUDGMENT_DURABILITY: number = 0.8;
-    /** Default priority of input question */
-    public static readonly DEFAULT_QUESTION_PRIORITY: number = 0.9;
-    /** Default durability of input question */
-    public static readonly DEFAULT_QUESTION_DURABILITY: number = 0.9;
-
-    /* ---------- space management ---------- */
-    /** Level granularity in Bag, two digits */
-    public static readonly BAG_LEVEL: number = 100;
-    /** Level separation in Bag, one digit */
-    public static readonly BAG_THRESHOLD: number = 10;
-    /** Hashtable load factor in Bag */
-    public static readonly LOAD_FACTOR: number = 0.5;
-    /** Size of ConceptBag */
-    public static readonly CONCEPT_BAG_SIZE: number = 1000;
-    /** Size of TaskLinkBag */
-    public static readonly TASK_LINK_BAG_SIZE: number = 20;
-    /** Size of TermLinkBag */
-    public static readonly TERM_LINK_BAG_SIZE: number = 100;
-    /** Size of TaskBuffer */
-    public static readonly TASK_BUFFER_SIZE: number = 10;
-
-    /* ---------- avoiding repeated reasoning ---------- */
-    /** Maximum length of Stamp, a power of 2 */
-    public static readonly MAXIMUM_STAMP_LENGTH: number = 8;
-    /** Remember recently used TermLink on a Task */
-    public static readonly TERM_LINK_RECORD_LENGTH: number = 10;
-    /** Maximum number of beliefs kept in a Concept */
-    public static readonly MAXIMUM_BELIEF_LENGTH: number = 7;
-    /** Maximum number of questions kept in a Concept */
-    public static readonly MAXIMUM_QUESTIONS_LENGTH: number = 5;
-    static CONCEPT_BAG_CAPACITY: number;
+  public static NOVELTY_HORIZON = 100000; // Originally equal to the termlink record length (10), scaled to time
+  public static DECISION_THRESHOLD = 0.51; // Minimum expectation for a desire value to execute an operation
+  public static CONCEPT_BAG_SIZE = 10000; // Size of ConceptBag
+  public static CONCEPT_BAG_LEVELS = 1000; // Levels of ConceptBag
+  public static DURATION = 5; // Cycles per duration, range of "now" is [-DURATION/2, +DURATION/2]
+  public static MAX_BUFFER_DURATION_FACTOR = 2; // Value * DURATION = time buffer element stays
+  public static HORIZON = 1; // Evidential Horizon, amount of future evidence to be considered
+  public static TRUTH_EPSILON = 0.01; // Internal precision for TruthValue calculations
+  public static BUDGET_EPSILON = 0.0001; // Budget value epsilon
+  public static BUDGET_THRESHOLD = 0.01; // Budget threshold rate for task to be accepted
+  public static DEFAULT_CONFIRMATION_EXPECTATION = 0.6; // Default expectation for confirmation on anticipation
+  public static ALWAYS_CREATE_CONCEPT = true; // Ignore expectation for creation of concept
+  public static DEFAULT_CREATION_EXPECTATION = 0.66; // Default expectation for creation of concept
+  public static DEFAULT_CREATION_EXPECTATION_GOAL = 0.6; // Default expectation for creation of concept for goals
+  public static DEFAULT_JUDGMENT_CONFIDENCE = 0.9; // Default confidence of input judgment
+  public static DEFAULT_JUDGMENT_PRIORITY = 0.8; // Default priority of input judgment
+  public static DEFAULT_JUDGMENT_DURABILITY = 0.5; // Default durability of input judgment
+  public static DEFAULT_QUESTION_PRIORITY = 0.9; // Default priority of input question
+  public static DEFAULT_QUESTION_DURABILITY = 0.9; // Default durability of input question
+  public static DEFAULT_GOAL_CONFIDENCE = 0.9; // Default confidence of input goal
+  public static DEFAULT_GOAL_PRIORITY = 0.9; // Default priority of input goal
+  public static DEFAULT_GOAL_DURABILITY = 0.9; // Default durability of input goal
+  public static DEFAULT_QUEST_PRIORITY = 0.9; // Default priority of input quest
+  public static DEFAULT_QUEST_DURABILITY = 0.9; // Default durability of input quest
+  public static BAG_THRESHOLD = 1.0; // Level separation in LevelBag, one digit
+  public static FORGET_QUALITY_RELATIVE = 0.3; // Used in budgetfunctions iterative forgetting
+  public static REVISION_MAX_OCCURRENCE_DISTANCE = 10; // Maximum occurrence distance for revision
+  public static TASK_LINK_BAG_SIZE = 100; // Size of TaskLinkBag
+  public static TASK_LINK_BAG_LEVELS = 10; // Levels of TaskLinkBag
+  public static TERM_LINK_BAG_SIZE = 100; // Size of TermLinkBag
+  public static TERM_LINK_BAG_LEVELS = 10; // Levels of TermLinkBag
+  public static TERM_LINK_MAX_MATCHED = 10; // Max TermLinks checked for novelty per TaskLink
+  public static GLOBAL_BUFFER_SIZE = 30; // Size of Novel Task Buffer
+  public static GLOBAL_BUFFER_LEVELS = 10; // Levels of Global Buffer
+  public static INTERNAL_BUFFER_SIZE = 30; // Size of Internal Buffer
+  public static INTERNAL_BUFFER_LEVELS = 10; // Levels of Internal Buffer
+  public static SEQUENCE_BAG_SIZE = 30; // Size of derived sequence and input event bag
+  public static SEQUENCE_BAG_LEVELS = 10; // Levels of Sequence Bag
+  public static OPERATION_BAG_SIZE = 10; // Size of remembered last operation tasks
+  public static OPERATION_BAG_LEVELS = 10; // Levels of Operation Bag
+  public static OPERATION_SAMPLES = 6; // At least 2 to avoid only last decision consideration
+  public static PROJECTION_DECAY = 0.1; // How fast events decay in confidence
+  public static MAXIMUM_EVIDENTIAL_BASE_LENGTH = 20000; // Maximum length of the evidential base of the Stamp
+  public static TERMLINK_MAX_REASONED = 3; // Max TermLinks used for reasoning per Task
+  public static TERM_LINK_RECORD_LENGTH = 10; // Record-length for new TermLinks
+  public static CONCEPT_BELIEFS_MAX = 28; // Max beliefs per Concept
+  public static CONCEPT_QUESTIONS_MAX = 5; // Max questions per Concept
+  public static CONCEPT_GOALS_MAX = 7; // Max goals per Concept
+  public static reliance = 0.9; // Empirical confidence of analytical truth
+  public static DISCOUNT_RATE = 0.5; // Rate of confidence decrease in Doubt/Hesitate
+  public static IMMEDIATE_ETERNALIZATION = true; // Whether eternalization happens on every derivation
+  public static SEQUENCE_BAG_ATTEMPTS = 10; // Attempts for sequence bag
+  public static CONDITION_BAG_ATTEMPTS = 10; // Attempts for condition bag
+  public static DERIVATION_PRIORITY_LEAK = 0.4; // Priority leak on derivation
+  public static DERIVATION_DURABILITY_LEAK = 0.4; // Durability leak on derivation
+  public static CURIOSITY_DESIRE_CONFIDENCE_MUL = 0.1; // Confidence multiplier for curiosity
+  public static CURIOSITY_DESIRE_PRIORITY_MUL = 0.1; // Priority multiplier for curiosity
+  public static CURIOSITY_DESIRE_DURABILITY_MUL = 0.3; // Durability multiplier for curiosity
+  public static CURIOSITY_FOR_OPERATOR_ONLY = false; // Restrict curiosity to operators
+  public static BREAK_NAL_HOL_BOUNDARY = false; // Allow breaking NAL higher-order logic boundary
+  public static QUESTION_GENERATION_ON_DECISION_MAKING = false; // Enable question generation on decision making
+  public static HOW_QUESTION_GENERATION_ON_DECISION_MAKING = false; // Enable how-question generation
+  public static ANTICIPATION_CONFIDENCE = 0.1; // Induction confidence to revise anticipations
+  public static ANTICIPATION_TOLERANCE = 100.0; // Tolerance on anticipation
+  public static RETROSPECTIVE_ANTICIPATIONS = false; // Check memory on anticipation
+  public static SATISFACTION_THRESHOLD = 0.0; // Satisfaction threshold
+  public static COMPLEXITY_UNIT = 1.0; // Base complexity unit
+  public static INTERVAL_ADAPT_SPEED = 4.0; // Adapt speed for intervals
+  public static TASKLINK_PER_CONTENT = 4; // Extra eternal/event also seen
+  public static DEFAULT_FEEDBACK_PRIORITY = 0.9; // Default priority of execution feedback
+  public static DEFAULT_FEEDBACK_DURABILITY = 0.5; // Default durability of execution feedback
+  public static CONCEPT_FORGET_DURATIONS = 2.0; // Decay duration for ConceptBag
+  public static GLOBAL_BUFFER_FORGET_DURATIONS = 1.0; // Forget duration for global buffer
+  public static INTERNAL_BUFFER_FORGET_DURATIONS = 1.0; // Forget duration for internal buffer
+  public static TERMLINK_FORGET_DURATIONS = 10.0; // Decay rate in TermLinkBag
+  public static TASKLINK_FORGET_DURATIONS = 4.0; // Decay rate in TaskLinkBag
+  public static EVENT_FORGET_DURATIONS = 4.0; // Sequence bag forget durations
+  public static VARIABLE_INTRODUCTION_COMBINATIONS_MAX = 8; // Max attempted combinations in var introduction
+  public static VARIABLE_INTRODUCTION_CONFIDENCE_MUL = 0.9; // Confidence penalty per var introduced
+  public static ANTICIPATIONS_PER_CONCEPT_MAX = 8; // Max anticipations stored in a concept
+  public static MOTOR_BABBLING_CONFIDENCE_THRESHOLD = 0.8; // Confidence threshold to avoid babbling
+  public static THREADS_AMOUNT = 1; // Default thread amount at startup
+  public static VOLUME = 0; // Default volume at startup
+  public static MILLISECONDS_PER_STEP = 0; // Milliseconds per step at startup
+  public static STEPS_CLOCK = true; // Timing mode, steps or real time
+  public static BUFFER_MAX_DURATION = 100; // Buffer max duration
+  public static ALLOW_LEGACY_EVENT_BAG_HANDLING_TOO = false; // Allow legacy event bag-like comparison
+    static DEFAULT_TENSE: import("/Users/mina/Documents/opennars-projects/OpenNARS-Node/src/core/Enums").Tense | null;
 }

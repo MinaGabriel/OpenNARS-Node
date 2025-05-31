@@ -2811,15 +2811,15 @@ function peg$parse(input, options) {
       };
 
       // Get punctuation mark to determine defaults
-      const punct = sentence.getPunctuation();
+      const punct = sentence.punctuation;
       const def = defaults[punct] || defaults['.'];
 
       // Use provided budget values or defaults
       const [priority, durability, quality] = budget || [];
       const p = priority ?? def.p;
       const d = durability ?? def.d;
-      const q = quality ?? (sentence.getTruth() ? 
-        options.BudgetFunctions.truthToQuality(sentence.getTruth()) : 
+      const q = quality ?? (sentence.truth ? 
+        options.System.Budget.truthToQuality(sentence.truth) : 
         def.q);
 
       return new options.Task(

@@ -1,4 +1,4 @@
-import { ConnectorType } from './ConnectorType';
+import { ConnectorType } from './Enums';
 
 export class Connector {
   private _is_commutative: boolean;

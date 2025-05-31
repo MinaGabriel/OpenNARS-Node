@@ -77,6 +77,8 @@
         "pegjs",
         "punc",
         "subterms",
+        "TASKLINK",
+        "TERMLINK",
         "TOOBAD"
     ],
 

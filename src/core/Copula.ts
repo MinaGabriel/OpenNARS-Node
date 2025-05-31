@@ -1,25 +1,6 @@
-/**
- * Refactored Copula class for use in NARS + PEG.js integration
- */
+import { CopulaSymbols, CopulaSymbol }   from "./Enums";
 
-// Enum is no longer strictly needed if we use a lookup map
-const CopulaSymbols = {
-    "-->": "Inheritance",
-    "<->": "Similarity",
-    "{--": "Instance",
-    "--]": "Property",
-    "{-]": "InstanceProperty",
-    "==>": "Implication",
-    "=/>": "PredictiveImplication",
-    "=|>": "ConcurrentImplication",
-    "=\\>": "RetrospectiveImplication",
-    "<=>": "Equivalence",
-    "</>": "PredictiveEquivalence",
-    "<|>": "ConcurrentEquivalence"
-  } as const;
-  
-  export type CopulaSymbol = keyof typeof CopulaSymbols;
-  
+
   export class Copula { 
     public readonly symbol: CopulaSymbol;
   

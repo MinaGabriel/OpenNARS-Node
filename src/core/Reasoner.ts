@@ -9,9 +9,7 @@ export class Reasoner {
   private _engine = MemoryStore.getState().engine;
   private _channel = MemoryStore.getState().channel;
 
-  constructor() {
-    Stamp.init();
-    // Set self into store to avoid undefined issue
+  constructor() { 
     MemoryStore.setState({ reasoner: this });
   }
 

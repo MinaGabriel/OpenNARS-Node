@@ -1,32 +1,39 @@
 import { Reasoner } from './src/core/Reasoner';
 import promptSync from 'prompt-sync';
-import logger from './src/utils/Logger';
-import * as Utility from './src/utils/Utility';
-import { memoryStore } from './src/core/MemoryStore';
+import { System } from './src/core/Functions'; // Assuming `System` is exported here
+import { MemoryStore } from './src/core/MemoryStore';
+import { ConceptBag } from './src/core/bag/ConceptBag';
 
 const prompt = promptSync();
-
-// Initialize Reasoner and store it
 const nars = new Reasoner();
+
+System.Log.setup(); // Initialize logging
 
 while (true) {
   const input = prompt('> ');
+
   switch (input.trim().toLowerCase()) {
     case 'exit':
       process.exit(0);
     case 'time':
-      Utility.printTimeInfo();
+      System.Print.printTimeInfo();
       continue;
     case 'concepts':
-      Utility.conceptBagTableView();
+      System.Print.conceptBagTableView();
+      continue;
+    case 'tasks':
+      System.Print.globalTaskBagTableView();
       continue;
     default:
       const [success, task, overflow] = nars.inputNarsese(input);
+      const concepts: ConceptBag = MemoryStore.getState().memory.conceptsBag;
+
       if (!success) {
-        logger.console.error('Failed to process input.');
+        System.Log.error('Failed to process input.');
       } else {
-        logger.file.appendJson('Task', task);
+        System.Log.appendJson('Task', task);
       }
+
       continue;
   }
 }

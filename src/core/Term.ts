@@ -1,14 +1,14 @@
 import { nanoid } from 'nanoid';
 import { ImmutableOrderedSet } from './ImmutableOrderedSet';
-import { TermType } from './TermType';
+import { TermType } from './Enums';
 import { Symbols } from './Symbols';
-
-class Term {
+import { TemporalTypes } from './Enums';
+import { Identifiable } from './interfaces/Identifiable';
+export class Term implements Identifiable {
     private readonly _key: string = nanoid(8);
     private _complexity: number = 1;
     private _terms: Set<Term> = new Set();
     private _components: Set<Term> = new Set();
-
     private _hasVariable: boolean = true;
     private _hasDependantVariable: boolean = false;
     private _hasIndependentVariable: boolean = false;
@@ -32,21 +32,26 @@ class Term {
     }
 
     /** ========== READ-ONLY GETTERS ========== */
-    get name(): string { return this._name; }
+    
     get type(): TermType { return this._type; }
     get key(): string { return this._key; }
     get complexity(): number { return this._complexity; }
     get terms(): Set<Term> { return new Set(this._terms); }
     get components(): Set<Term> { return new Set(this._components); }
+    get temporalOrder(): TemporalTypes { return TemporalTypes.ORDER_NONE; }
 
-    get isAtom(): boolean { return this._type === TermType.ATOM; }
-    get isCompound(): boolean { return this._type === TermType.COMPOUND; }
-    get isStatement(): boolean { return this._type === TermType.STATEMENT; }
+    name(): string { return this._name; }
+    toString(): string { return this._name;}
 
-    get hasVariable(): boolean { return this._hasVariable; }
-    get hasVariableDependant(): boolean { return this._hasDependantVariable; }
-    get hasVariableIndependent(): boolean { return this._hasIndependentVariable; }
-    get hasVariableQuery(): boolean { return this._hasQueryVariable; }
+    isAtom(): boolean { return this._type === TermType.ATOM; }
+    isCompound(): boolean { return this._type === TermType.COMPOUND; }
+    isStatement(): boolean { return this._type === TermType.STATEMENT; }
+    variable(): string { return this._variable; }
+
+    hasVariable(): boolean { return this._hasVariable; }
+    hasVariableDependant(): boolean { return this._hasDependantVariable; }
+    hasVariableIndependent(): boolean { return this._hasIndependentVariable; }
+    hasVariableQuery(): boolean { return this._hasQueryVariable; }
 
     /** ========== CONTROLLED SETTERS ========== */
     set complexity(val: number) {
@@ -55,9 +60,7 @@ class Term {
 
     /** ========== METHODS ========== */
 
-    toString(): string {
-        return this._name;
-    }
+    
 
     public subTerms(): ImmutableOrderedSet<Term> {
         return new ImmutableOrderedSet([this], Array.from(this._components));
@@ -76,7 +79,7 @@ class Term {
     }
 
     public equals(that: Term): boolean {
-        return that instanceof Term && this._name === that.name;
+        return that instanceof Term && this.name() === that.name();
     }
 
     public clone(): Term {
@@ -86,6 +89,23 @@ class Term {
         cloned._terms = new Set([...this._terms].map(term => term.clone()));
         return cloned;
     }
-}
 
-export { Term };
+
+    public static getAncestorPairs(node: Term, ancestors: Term[] = [], pairs: [Term, Term][] = []): [Term, Term][] {
+        // Log ancestor links *before* visiting children
+        for (const ancestor of ancestors) {
+            if (pairs.some(([existingAncestor, existingNode]) =>
+                existingAncestor.identical(ancestor) && existingNode.identical(node))) {
+                continue;
+            }
+            pairs.push([ancestor, node]); // Add the ancestor-descendant pair if not already in the list
+        }
+        if (node.isAtom()) return pairs; // stop recursion if node is an atom
+        for (const child of node.components) {
+            this.getAncestorPairs(child, [node, ...ancestors], pairs); // Add current node to ancestor chain
+        }
+        return pairs;
+    }
+
+
+} 

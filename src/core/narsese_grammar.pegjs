@@ -1,5 +1,6 @@
 { 
   function makeTask(sentence, budget) {
+    console.log("Hello") ;
     // Extract budget symbols with proper defaults
     const defaults = {
       '.': { // Judgment
@@ -20,17 +21,17 @@
     };
 
     // Get punctuation mark to determine defaults
-    const punct = sentence.getPunctuation();
-    const def = defaults[punct] || defaults['.'];
+    const punctuation = sentence.punctuation;
+    const def = defaults[punctuation] || defaults['.'];
 
     // Use provided budget symbols or defaults
     const [priority, durability, quality] = budget || [];
     const p = priority ?? def.p;
     const d = durability ?? def.d;
-    const q = quality ?? (sentence.getTruth() ? 
-      options.BudgetFunctions.truthToQuality(sentence.getTruth()) : 
+    const q = quality ?? (sentence.truth ? 
+      options.System.Budget.truthToQuality(sentence.truth) : 
       def.q);
-
+  console.log(sentence) ;
     return new options.Task(
       sentence, 
       new options.Budget(null, p, d, q)

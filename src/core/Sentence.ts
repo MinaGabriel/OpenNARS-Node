@@ -1,82 +1,109 @@
 import { Term } from './Term';
-import { Punctuation } from './Punctuation';
+import { Punctuation } from './Enums';
 import { Truth } from './Truth';
 import { Stamp } from './Stamp';
-import { Tense } from './Tense';
+import { Statement } from './Statement';
+import { Identifiable } from './interfaces/Identifiable';
+import { Task } from './Task';
 
 /**
- * Abstract Sentence class
- * Base for Judgement, Goal, Question
+ * Abstract Sentence class.
+ * Base for Judgement, Goal, and Question.
  */
-abstract class Sentence {
+abstract class Sentence implements Identifiable {
     protected readonly _term: Term;
     protected readonly _punctuation: Punctuation;
     protected readonly _truth: Truth;
     protected readonly _stamp: Stamp;
-    protected readonly _tense: Tense;
-    protected readonly _revisable: boolean;
-   
-    constructor(
-        term: Term,
-        punctuation: Punctuation,
-        truth: Truth,
-        stamp: Stamp,
-        tense: Tense,
-        revisable: boolean = true
-    ) {
+
+    constructor(term: Term, punctuation: Punctuation, truth: Truth, stamp: Stamp) {
         this._term = term;
         this._punctuation = punctuation;
         this._truth = truth;
         this._stamp = stamp;
-        this._tense = tense;
-        this._revisable = revisable;
     }
 
-    /** ========== GETTERS ========== */
-    get term(): Term {
-        return this._term;
+    /**
+     * Returns a human-readable name for the sentence.
+     */
+    name(): string {
+        const parts: string[] = [
+            this.term?.toString() ?? "[null term]",
+            this.punctuation?.toString() ?? "[null punctuation]"
+        ];
+
+        if (this.truth) parts.push(this.truth.toString());
+
+        if (
+            (this.punctuation === Punctuation.JUDGMENT ||
+                this.punctuation === Punctuation.QUESTION) &&
+            !!this.stamp
+        ) {
+            parts.push(this.stamp.toString());
+        }
+
+        return parts.join(' ');
     }
 
-    get punctuation(): Punctuation {
-        return this._punctuation;
-    }
-
-    get truth(): Truth {
-        return this._truth;
-    }
-
-    get stamp(): Stamp {
-        return this._stamp;
-    }
-
-    get tense(): Tense {
-        return this._tense;
-    }
-
-    get revisable(): boolean {
-        return this._revisable;
-    }
-
-
-    /** ========== METHODS ========== */
+    /**
+     * Returns a string representation of the sentence.
+     */
     toString(): string {
-        return [
-            this.term.toString(),
-            this.punctuation.toString()
-        ].filter(Boolean).join(' ');
+        return `${this.name()}`;
     }
 
-    isQuestion(): boolean {
+    // ========== GETTERS ==========
+
+    get term(): Term { return this._term; }
+    get punctuation(): Punctuation { return this._punctuation; }
+    get truth(): Truth { return this._truth; }
+    get stamp(): Stamp { return this._stamp; }
+
+    // ========== METHODS ==========
+
+    /**
+     * Checks if the sentence is a question.
+     */
+    public isQuestion(): boolean {
         return this._punctuation === Punctuation.QUESTION;
     }
 
-    isJudgement(): boolean {
+    /**
+     * Checks if the sentence is a goal.
+     */
+    public isGoal(): boolean {
+        return this._punctuation === Punctuation.GOAL;
+    }
+
+    /**
+     * Checks if the sentence is a judgement.
+     */
+    public isJudgement(): boolean {
         return this._punctuation === Punctuation.JUDGMENT;
     }
 
-    containQueryVariable(): boolean {
-        return this._term.name.includes('?');
+    /**
+     * Checks if the term contains a query variable.
+     */
+    public containQueryVariable(): boolean {
+        return this._term.name().includes('?');
     }
+
+    /**
+     * Checks if the sentence is revisable.
+     */
+    public isRevisable(): boolean {
+        const statementTarget = this.term as Statement;
+        return (
+            statementTarget.copula.symbol === "-->" ||
+            statementTarget.copula.symbol === "<=>" ||
+            !this.term.hasVariableDependant()
+        );
+    }
+
+    public isEternal(): boolean {
+        return this._stamp.isEternal();
+    } 
 }
 
 export { Sentence };

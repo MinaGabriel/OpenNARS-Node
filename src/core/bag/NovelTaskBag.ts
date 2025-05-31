@@ -1,5 +1,5 @@
 import { Bag } from "./Bag";
-import { Task } from "./Task";
+import { Task } from "../Task";
 
 
 class NovelTaskBag extends Bag<Task> {
