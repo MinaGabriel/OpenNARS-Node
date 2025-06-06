@@ -6,14 +6,14 @@ import { Term } from './Term';
 import { Copula } from './Copula';
 import { Statement } from './Statement';
 import { Truth } from './Truth';
-import { Tense, Punctuation, TermType, ConnectorType } from './Enums';
+import { Tense, Punctuation, TermType, ConnectorType } from './enums/Enums';
 import { Budget } from './Budget'; 
+import { BudgetFunctions } from './inference/BudgetFunctions';
 import { Connector } from './Connector';
-import { Compound } from './Compound'; 
-import { System } from './Functions';
+import { Compound } from './Compound';  
 // Import the precompiled parser
 // @ts-ignore
-import narseseParser from './narsese_grammar.js'; // TODO: Use --> npm run build:grammar
+import narseseParser from './io/narsese_grammar.js'; // TODO: Use --> npm run build:grammar
 
 /**
  * Parser class for Narsese language.
@@ -54,8 +54,8 @@ class NarseseParser {
                 Tense,
                 Punctuation,
                 Task,
-                Connector,
-                System,
+                BudgetFunctions,
+                Connector, 
                 ConnectorType,
                 Compound, 
             });

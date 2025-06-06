@@ -1,6 +1,6 @@
 import { Punctuation } from './Punctuation'; 
 import { Term } from './Term';
-import { Memory } from './Memory';
+import { Memory } from './storage/Memory';
 import { Sentence } from './Sentence';
 
 

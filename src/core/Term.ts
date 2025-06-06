@@ -1,9 +1,9 @@
 import { nanoid } from 'nanoid';
-import { ImmutableOrderedSet } from './ImmutableOrderedSet';
-import { TermType } from './Enums';
-import { Symbols } from './Symbols';
-import { TemporalTypes } from './Enums';
-import { Identifiable } from './interfaces/Identifiable';
+import { ImmutableOrderedSet } from './utils/ImmutableOrderedSet';
+import { TermType } from './enums/Enums';
+import { Symbols } from './enums/Symbols';
+import { TemporalTypes } from './enums/Enums';
+import { Identifiable } from './interface/Identifiable';
 export class Term implements Identifiable {
     private readonly _key: string = nanoid(8);
     private _complexity: number = 1;

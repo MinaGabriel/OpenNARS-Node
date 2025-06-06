@@ -103,15 +103,38 @@ export const CopulaSymbols = {
  */
 export type CopulaSymbol = keyof typeof CopulaSymbols;
 
+// Enum for truth function types (mirrors OpenNARS EnumType)
+export enum TruthFunctionType {
+    DESIREDED = 'DESIREDED',
+    DESIREIND = 'DESIREIND',
+    DESIREWEAK = 'DESIREWEAK',
+    DESIRESTRONG = 'DESIRESTRONG',
+    COMPARISON = 'COMPARISON',
+    ANALOGY = 'ANALOGY',
+    ANONYMOUSANALOGY = 'ANONYMOUSANALOGY',
+    DEDUCTION = 'DEDUCTION',
+    EXEMPLIFICATION = 'EXEMPLIFICATION',
+    ABDUCTION = 'ABDUCTION',
+    RESEMBLENCE = 'RESEMBLENCE',
+    REDUCECONJUNCTION = 'REDUCECONJUNCTION',
+    REDUCEDISJUNCTION = 'REDUCEDISJUNCTION',
+    REDUCEDISJUNCTIONREV = 'REDUCEDISJUNCTIONREV',
+    REDUCECONJUNCTIONNEG = 'REDUCECONJUNCTIONNEG',
+}
+
+
+
+
 /**
  * Temporal order constants for reasoning about event sequences in NAL-7.
  * Matches the original Java `TemporalRules` definitions.
  */
 export enum TemporalTypes {
+  ORDER_INVALID = -2,       // Invalid or unknown temporal relation
   ORDER_BACKWARD = -1,     // Consequence happens before the condition (retrospective)
   ORDER_CONCURRENT = 0,    // Events occur simultaneously (concurrent)
   ORDER_FORWARD = 1,       // Condition happens before the consequence (predictive)
-  ORDER_NONE = 2,          // No specific temporal order
-  ORDER_INVALID = -2       // Invalid or unknown temporal relation
+  ORDER_NONE = 2          // No specific temporal order
+  
 }
 export type TemporalType = keyof typeof TemporalTypes;

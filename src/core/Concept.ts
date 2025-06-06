@@ -1,23 +1,32 @@
 import { add } from "winston";
-import { Bag } from "./bag/Bag";
+import { Bag } from "./storage/Bag";
 import { Budget } from "./Budget";
 import { Item } from "./Item";
 import { Judgement } from "./Judgement";
 import { Sentence } from "./Sentence";
 import { Task } from "./Task";
 import { TaskLink } from "./TaskLink";
-import { TaskLinkBag } from "./bag/TaskLinkBag";
+import { TaskLinkBag } from "./storage/TaskLinkBag";
 import { Term } from "./Term";
 import { TermLink } from "./TermLink";
-import { TermLinkBag } from "./bag/TermLinkBag";
+import { TermLinkBag } from "./storage/TermLinkBag";
 import { Parameters } from "./Parameters";
 import { nanoid } from 'nanoid';
-import { LinkType } from "./Enums";
+import { LinkType, Punctuation } from "./enums/Enums";
 import _ from "lodash";
-import { System } from "./Functions";
-import { Identifiable } from "./interfaces/Identifiable";
+
+import { Identifiable } from "./interface/Identifiable";
 import { BaseEntry, Stamp } from "./Stamp";
 import cloneDeep from 'clone-deep';
+import { LogFunctions } from "./utils/LogFunctions";
+import { RuleFunctions } from "./inference/RuleFunctions";
+import { BudgetFunctions } from "./inference/BudgetFunctions";
+import { Memory } from "./storage/Memory";
+import { MemoryStore } from "./storage/MemoryStore";
+import { Truth } from "./Truth";
+import { TruthFunctions } from "./inference/TruthFunctions";
+import { Premise } from "./enums/Types";
+import { StampFunctions } from "./inference/StampFunctions";
 class Concept extends Item implements Identifiable {
 
     private _term: Term;
@@ -47,7 +56,7 @@ class Concept extends Item implements Identifiable {
     set taskLinks(links: TaskLinkBag) { this._taskLinksBag = links; }
     get termLinks(): TermLinkBag { return this._termLinksBag; }
     set termLinks(links: TermLinkBag) { this._termLinksBag = links; }
-    get beliefs(): Task[] { return this._beliefs; } 
+    get beliefs(): Task[] { return this._beliefs; }
     get term(): Term { return this._term; }
     public directProcess(task: Task): void {
         if (task.sentence.isJudgement()) {
@@ -69,36 +78,47 @@ class Concept extends Item implements Identifiable {
 
 
     private processJudgment(newTask: Task): void {
-        System.Log.info(`Concept.processJudgment: Processing new judgment: ${newTask.sentence}`);
-        const newBelief = newTask.sentence;
+        LogFunctions.info(`Concept.processJudgment: Processing new judgment: ${newTask.sentence}`);
         // Step 1: Find matching belief with highest truth value OpenNARS 3.1.0 @concept.selectCandidate
         const oldBelief: Task | null = this.selectCandidate(newTask, this._beliefs);
         if (oldBelief) {
-            System.Log.info(`Concept.processJudgment: Found candidate belief: ${oldBelief.sentence} for new belief: ${newBelief}`);
             // Step 2: If candidate exists, update the belief with the new judgment
-            const newStamp = newBelief.stamp;
+            const newStamp = newTask.sentence.stamp;
             const oldStamp = oldBelief.sentence.stamp;
-            if (newStamp.equals(oldStamp, false, true, true)) return // No change, same belief
-            if (System.Rule.revisable(newBelief, oldBelief.sentence)) {
-                //Truth Revision 
+            if (newStamp.equals(oldStamp, false, true, true)) return; // No change, same belief
+            if (RuleFunctions.revisable(newTask.sentence, oldBelief.sentence)) {
+                const believedRevisedTask: Task = this.localRevision(newTask, oldBelief);
+                //reduce priority by achieving the same belief 
                 
-                //Merge evidential base
-                const newBase = newStamp.evidentialBase;
-                const oldBase = oldStamp.evidentialBase;
-                const interleaved = _.flatten(_.zip(newBase, oldBase)).filter(e => e !== undefined) as BaseEntry[];
-                const maxLength = Parameters.MAXIMUM_EVIDENTIAL_BASE_LENGTH;
-                
-                let stamp : Stamp = cloneDeep(newStamp);
-
-
-
-
             }
 
 
         }
         Concept.addToTable(newTask, this._beliefs, Parameters.CONCEPT_BELIEFS_MAX, true);
         // Step 3: If no candidate exists, add the judgment as a new belief
+    }
+    public localRevision(task: Task, belief: Task): Task {
+        const taskTerm = task.sentence.term;
+
+        const budgetTask = task.budget;
+
+        const taskSentence: Premise = task.sentence;
+        const beliefSentence: Premise = belief.sentence;
+
+        const truthTask = taskSentence.truth;
+        const truthBelief = beliefSentence.truth;
+
+        const taskStamp = taskSentence.stamp;
+        const beliefStamp = beliefSentence.stamp;
+
+        const truthDerived = TruthFunctions.revision(truthTask, truthBelief);
+        const [budgetDerived, ...others] = BudgetFunctions.revision(budgetTask, truthTask, truthBelief, truthDerived);
+        const stampDerived = StampFunctions.revision(taskStamp, beliefStamp);
+
+        if (taskSentence.isJudgement()) return new Task(new Judgement(taskTerm, Punctuation.JUDGMENT, truthDerived,
+            stampDerived?.tense, stampDerived), budgetDerived)
+
+        return task;
     }
 
     static addToTable(
@@ -108,11 +128,11 @@ class Concept extends Item implements Identifiable {
         rankTruthExpectation: boolean
     ): Task | null {
         const newSentence = newTask.sentence;
-        const rank1 = System.Budget.rankBelief(newSentence, rankTruthExpectation);
+        const rank1 = BudgetFunctions.rankBelief(newSentence, rankTruthExpectation);
 
         for (let i = 0; i < table.length; i++) {
             const sentence2 = table[i].sentence;
-            const rank2 = System.Budget.rankBelief(sentence2, rankTruthExpectation);
+            const rank2 = BudgetFunctions.rankBelief(sentence2, rankTruthExpectation);
             if (rank1 >= rank2) {
                 if (
                     newSentence.truth.equals(sentence2.truth) &&
@@ -139,20 +159,25 @@ class Concept extends Item implements Identifiable {
         return null;
     }
 
-    public selectCandidate(query: Task, list: Task[]): Task | null {
+    public selectCandidate(newTask: Task, list: Task[]): Task | null {
         let currentBest: number = 0;
         let beliefQuality: number = 0;
-        let candidate: Task | null = null;
+        let belief: Task | null = null;
         let rateByConfidence: boolean = true; //use confidence or expectation otherwise
         for (const task of list) {
-            const Judgement = task.sentence;
-            beliefQuality = System.Rule.solutionQuality(query, Judgement, rateByConfidence);
+            const currentBelief = task.sentence;
+            beliefQuality = RuleFunctions.solutionQuality(task, currentBelief, rateByConfidence);
             if (beliefQuality > currentBest) {
                 currentBest = beliefQuality;
-                candidate = task;
+                belief = task;
             }
         }
-        return candidate;
+        if (belief) {
+
+        } else {
+            LogFunctions.info(`Concept.selectCandidate: No suitable belief found for query: ${newTask.sentence}`);
+        }
+        return belief;
     }
 
 

@@ -1,5 +1,5 @@
 
-import { ImmutableOrderedSet } from "../ImmutableOrderedSet";
+import { ImmutableOrderedSet } from "../utils/ImmutableOrderedSet";
 import { Term } from "../Term";
 import { TermType } from "../TermType";
 

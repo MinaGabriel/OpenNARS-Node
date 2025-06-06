@@ -1,24 +1,24 @@
-import { Bag } from "./bag/Bag";
-import { Concept } from "./Concept";
-import { Task } from "./Task";
-import { ConceptBag } from "./bag/ConceptBag";
-import { Budget } from "./Budget";
-import { Term } from "./Term";
-import { Sentence } from "./Sentence";
-import { Parameters } from "./Parameters";
-import { NovelTaskBag } from "./bag/NovelTaskBag";
-import { TaskLink } from "./TaskLink";
-import { LinkType } from "./Enums";
-import { TermLink } from "./TermLink";
+import { Bag } from "./Bag";
+import { Concept } from "../Concept";
+import { Task } from "../Task";
+import { ConceptBag } from "./ConceptBag";
+import { Budget } from "../Budget";
+import { Term } from "../Term";
+import { Sentence } from "../Sentence";
+import { Parameters } from "../Parameters";
+import { NovelTaskBag } from "./NovelTaskBag";
+import { TaskLink } from "../TaskLink";
+import { LinkType } from "../enums/Enums";
+import { TermLink } from "../TermLink";
 import _, { fromPairs } from "lodash";
 import { table } from "table";
-import { TaskLinkBag } from "./bag/TaskLinkBag";
+import { TaskLinkBag } from "./TaskLinkBag";
 import colors from "ansi-colors";
-import { TermLinkBag } from "./bag/TermLinkBag";
-import { System } from "./Functions";
-import { GlobalTaskBag } from "./bag/GlobalTaskBag";
+import { TermLinkBag } from "./TermLinkBag"; 
+import { GlobalTaskBag } from "./GlobalTaskBag";
 import { Logger } from "winston";
 import cloneDeep from 'clone-deep';
+import { BudgetFunctions } from "../inference/BudgetFunctions";
 
 export class Memory {
     private data: string[][] = [];
@@ -43,7 +43,7 @@ export class Memory {
 
     public activateConcept(concept: Concept, budget: Budget): void {
         this._conceptsBag.pickOut(concept.key);
-        System.Budget.activate(concept, budget);
+        BudgetFunctions.activate(concept, budget);
         this._conceptsBag.putBack(concept);
     }
 

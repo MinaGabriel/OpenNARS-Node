@@ -1,8 +1,8 @@
 import { Truth } from './Truth';
-import { Punctuation } from './Enums';
+import { Punctuation } from './enums/Enums';
 import { Base } from './Base';
 import { Term } from './Term';
-import { Memory } from './Memory';
+import { Memory } from './storage/Memory';
 import { Sentence } from './Sentence';
 
 class Goal extends Sentence {

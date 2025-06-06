@@ -4,7 +4,7 @@ import { Concept } from "./Concept";
 import { Link } from "./Link";
 import { Task } from "./Task";
 import _ from "lodash";
-import { LinkType } from "./Enums";
+import { LinkType } from "./enums/Enums";
 
 
 class TermLink extends Link {

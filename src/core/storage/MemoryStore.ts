@@ -1,10 +1,10 @@
 // src/core/MemoryStore.ts
 import { createStore } from 'zustand/vanilla';
-import { Time } from './Time';
+import { Time } from '../Time';
 import { Memory } from './Memory';
-import { Reasoner } from './Reasoner';
-import { GeneralEngine } from './GeneralEngin';
-import { NarseseChannel } from './NarseseChannel';
+import { Reasoner } from '../Reasoner';
+import { GeneralEngine } from '../GeneralEngin';
+import { NarseseChannel } from '../io/NarseseChannel';
 // This file defines the MemoryStore, which is a Zustand store for managing the memory, time, reasoner, engine, and channel in the NARS system.
 
 

@@ -1,5 +1,5 @@
 // src/core/Reasoner.ts
-import { MemoryStore } from './MemoryStore';
+import { MemoryStore } from './storage/MemoryStore';
 import { Task } from './Task';
 import { Stamp } from './Stamp';
 

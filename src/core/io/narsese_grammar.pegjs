@@ -28,10 +28,8 @@
     const [priority, durability, quality] = budget || [];
     const p = priority ?? def.p;
     const d = durability ?? def.d;
-    const q = quality ?? (sentence.truth ? 
-      options.System.Budget.truthToQuality(sentence.truth) : 
-      def.q);
-  console.log(sentence) ;
+    const q = quality ?? (sentence.truth ? options.BudgetFunctions.truthToQuality(sentence.truth) :  def.q);
+    console.log(sentence) ;
     return new options.Task(
       sentence, 
       new options.Budget(null, p, d, q)
@@ -50,12 +48,13 @@ task = budget:budget? _ sentence:sentence { return makeTask(sentence, budget); }
 sentence
   = judgment
   / question
-  / goal 
+  / goal
+  / quest
 
 judgment = term:(statement / compound) _ "." _ tense:tense? _ truth:truth? { return new options.Judgement(term, ".", truth, tense); }
 question = term:(statement / compound) _ "?" _ tense:tense? { return new options.Question(); } //TODO
 goal     = term:(statement / compound) _ "!" _ tense:tense? _ desire:desire? { return new options.Goal(); }  //TODO
-
+quest    = term:(statement / compound) _ "@" _ tense:tense? { return new options.Quest(); } //TODO
 
 statement
   = "<" _ subject:term _ copula:copula _ predicate:term _ ">" { return new options.Statement(subject, copula, predicate, options.TermType.STATEMENT); }

@@ -3,7 +3,7 @@ import { Concept } from "./Concept";
 import { Item } from "./Item";
 import { Task } from "./Task";
 import { Term } from "./Term";
-import { LinkType } from "./Enums";
+import { LinkType } from "./enums/Enums";
 import { Statement } from "./Statement";
 import { Compound } from "./Compound";
 import { nanoid } from "nanoid";

@@ -1,10 +1,10 @@
-import { CopulaSymbols, CopulaSymbol }   from "./Enums";
+import { CopulaSymbols, CopulaSymbol }   from "./enums/Enums";
 
 
   export class Copula { 
     public readonly symbol: CopulaSymbol;
   
-    private constructor(name: string, symbol: CopulaSymbol) { 
+    private constructor(symbol: CopulaSymbol) { 
       this.symbol = symbol;
     }
   
@@ -23,7 +23,7 @@ import { CopulaSymbols, CopulaSymbol }   from "./Enums";
     // Static map for quick lookup
     private static symbolMap: Record<CopulaSymbol, Copula> = Object.entries(CopulaSymbols)
       .reduce((map, [symbol, name]) => {
-        map[symbol as CopulaSymbol] = new Copula(name, symbol as CopulaSymbol);
+        map[symbol as CopulaSymbol] = new Copula(symbol as CopulaSymbol);
         return map;
       }, {} as Record<CopulaSymbol, Copula>);
   

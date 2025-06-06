@@ -1,7 +1,7 @@
-import { MemoryStore } from './MemoryStore';
-import { NarseseParser } from './NarseseParser';
-import { Parameters } from './Parameters';
-import { Task } from './Task';
+import { MemoryStore } from '../storage/MemoryStore';
+import { NarseseParser } from '../NarseseParser';
+import { Parameters } from '../Parameters';
+import { Task } from '../Task';
 
 /**
  * NarseseChannel class for handling Narsese input

@@ -109,6 +109,5 @@ export class Parameters {
   public static MILLISECONDS_PER_STEP = 0; // Milliseconds per step at startup
   public static STEPS_CLOCK = true; // Timing mode, steps or real time
   public static BUFFER_MAX_DURATION = 100; // Buffer max duration
-  public static ALLOW_LEGACY_EVENT_BAG_HANDLING_TOO = false; // Allow legacy event bag-like comparison
-    static DEFAULT_TENSE: import("/Users/mina/Documents/opennars-projects/OpenNARS-Node/src/core/Enums").Tense | null;
+  public static ALLOW_LEGACY_EVENT_BAG_HANDLING_TOO = false; // Allow legacy event bag-like comparison 
 }

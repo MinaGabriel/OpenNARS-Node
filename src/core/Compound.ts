@@ -1,9 +1,9 @@
 import { OrderedSet } from "immutable";
 import { Connector } from "./Connector";
-import { ConnectorType } from "./Enums";
+import { ConnectorType } from "./enums/Enums";
 import { Term } from "./Term";
-import { TermType } from "./Enums";
-import { ImmutableOrderedSet } from "./ImmutableOrderedSet";
+import { TermType } from "./enums/Enums";
+import { ImmutableOrderedSet } from "./utils/ImmutableOrderedSet";
 
 
 class Compound extends Term {

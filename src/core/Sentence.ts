@@ -1,10 +1,10 @@
-import { Term } from './Term';
-import { Punctuation } from './Enums';
-import { Truth } from './Truth';
-import { Stamp } from './Stamp';
-import { Statement } from './Statement';
-import { Identifiable } from './interfaces/Identifiable';
-import { Task } from './Task';
+import { Term } from "./Term";
+import { Punctuation } from "./enums/Enums";
+import { Truth } from "./Truth";
+import { Stamp } from "./Stamp";
+import { Statement } from "./Statement";
+import { Identifiable } from "./interface/Identifiable";
+import { Task } from "./Task";
 
 /**
  * Abstract Sentence class.
@@ -16,7 +16,12 @@ abstract class Sentence implements Identifiable {
     protected readonly _truth: Truth;
     protected readonly _stamp: Stamp;
 
-    constructor(term: Term, punctuation: Punctuation, truth: Truth, stamp: Stamp) {
+    constructor(
+        term: Term,
+        punctuation: Punctuation,
+        truth: Truth,
+        stamp: Stamp
+    ) {
         this._term = term;
         this._punctuation = punctuation;
         this._truth = truth;
@@ -29,7 +34,7 @@ abstract class Sentence implements Identifiable {
     name(): string {
         const parts: string[] = [
             this.term?.toString() ?? "[null term]",
-            this.punctuation?.toString() ?? "[null punctuation]"
+            this.punctuation?.toString() ?? "[null punctuation]",
         ];
 
         if (this.truth) parts.push(this.truth.toString());
@@ -42,7 +47,7 @@ abstract class Sentence implements Identifiable {
             parts.push(this.stamp.toString());
         }
 
-        return parts.join(' ');
+        return parts.join(" ");
     }
 
     /**
@@ -54,10 +59,18 @@ abstract class Sentence implements Identifiable {
 
     // ========== GETTERS ==========
 
-    get term(): Term { return this._term; }
-    get punctuation(): Punctuation { return this._punctuation; }
-    get truth(): Truth { return this._truth; }
-    get stamp(): Stamp { return this._stamp; }
+    get term(): Term {
+        return this._term;
+    }
+    get punctuation(): Punctuation {
+        return this._punctuation;
+    }
+    get truth(): Truth {
+        return this._truth;
+    }
+    get stamp(): Stamp {
+        return this._stamp;
+    }
 
     // ========== METHODS ==========
 
@@ -86,7 +99,7 @@ abstract class Sentence implements Identifiable {
      * Checks if the term contains a query variable.
      */
     public containQueryVariable(): boolean {
-        return this._term.name().includes('?');
+        return this._term.name().includes("?");
     }
 
     /**
@@ -103,7 +116,15 @@ abstract class Sentence implements Identifiable {
 
     public isEternal(): boolean {
         return this._stamp.isEternal();
-    } 
+    }
+
+    achievingLevel(previousBelief: Task | null): number {
+        if ((this.isJudgement() || this.isGoal()) && previousBelief != null) return (1 - Math.abs(this.truth.getExpectation() - previousBelief.sentence.truth.getExpectation()));
+        if ((this.isJudgement() || this.isGoal()) && previousBelief == null) return Math.abs(this.truth.getExpectation() - 0.5);
+        if (this.isQuestion() && previousBelief != null) return 1 - Math.abs(this.truth.getExpectation() - 0.5);
+        if (this.isQuestion() && previousBelief == null) return 0.5;
+        return 0;
+    }
 }
 
 export { Sentence };

@@ -1,6 +1,6 @@
-import { Identifiable } from './interfaces/Identifiable';
+import { Identifiable } from './interface/Identifiable';
 import { ShortFloat } from './ShortFloat';
-import { Symbols } from './Symbols';
+import { Symbols } from './enums/Symbols';
 import numeral from 'numeral';
 
 /**
@@ -10,15 +10,15 @@ import numeral from 'numeral';
 export class Truth implements Identifiable {
     delimiter: string = Symbols.TRUTH_VALUE_MARK;
     separator: string = Symbols.VALUE_SEPARATOR;
-
+    isAnalytic: boolean = false;
     frequency: ShortFloat;
     confidence: ShortFloat;
     // k is a constant used in the expectation calculation, defaulting to 1
     k: number = 1;
 
-    constructor(f: number, c: number) {
-        this.frequency = new ShortFloat(f);
-        this.confidence = new ShortFloat(c);
+    constructor(f: number | ShortFloat, c: number | ShortFloat) {
+        this.frequency  = typeof f === 'number' ? new ShortFloat(f) : f;
+        this.confidence = typeof c === 'number' ?  new ShortFloat(c) : c;
     }
 
     /**

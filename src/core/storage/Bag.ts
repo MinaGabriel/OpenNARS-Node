@@ -1,6 +1,6 @@
 import { Item } from "../Item";
-import { Distributor } from "../Distributor";
-import { System } from '../Functions';
+import { Distributor } from "../Distributor"; 
+import { BudgetFunctions } from "../inference/BudgetFunctions";
 abstract class Bag<T extends Item> {
     protected static readonly TOTAL_LEVEL: number = 100;
     protected static readonly THRESHOLD: number = 10;
@@ -81,13 +81,12 @@ abstract class Bag<T extends Item> {
             return overflowItem !== newItem;
         }
 
-        System.Log.appendJson("name table ", System.String.mapToStringObject(this.name_table));
-
+        
         return true;
     }
 
     public putBack(oldItem: T): boolean {
-        System.Budget.forget(oldItem.budget, this.forget_rate, Bag.RELATIVE_THRESHOLD);
+        BudgetFunctions.forget(oldItem.budget, this.forget_rate, Bag.RELATIVE_THRESHOLD);
         return this.putIn(oldItem);
     }
 

@@ -28,6 +28,10 @@ export class ShortFloat {
         return this.value;
     }
 
+    public toNumber(): number {
+        return this.value * 0.0001;
+    }
+
     public setValue(v: number): void {
         if (v < 0 || v > 1) {
             throw new Error(`Invalid value: ${v}. Value must be between 0 and 1`);
