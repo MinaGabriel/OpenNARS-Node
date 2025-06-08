@@ -43,6 +43,14 @@ class Budget {
     this._quality.setValue(value);
   }
 
+  /**
+   * To summarize a BudgetValue into a single number in [0, 1]
+   * @return The summary value
+   */
+  summary(): number {
+    //TRACK: where is this coming from?
+    return this.durability * (this.priority + this.quality) / 2;
+  }
   // Increase priority using probabilistic OR (noisy-OR)
   increasePriority(newValue: number): void {
     this.priority = MathFunctions.or(this.priority, newValue);
@@ -72,6 +80,8 @@ class Budget {
   merge(that: Budget): void {
     BudgetFunctions.merge(this, that);
   }
+
+  
 
   singleValue(): number {
     return MathFunctions.average(this.priority, this.durability, this.quality);

@@ -19,6 +19,7 @@ import { GlobalTaskBag } from "./GlobalTaskBag";
 import { Logger } from "winston";
 import cloneDeep from 'clone-deep';
 import { BudgetFunctions } from "../inference/BudgetFunctions";
+import { MathFunctions } from "../utils/MathFunctions";
 
 export class Memory {
     private data: string[][] = [];
@@ -88,13 +89,14 @@ export class Memory {
 
     private immediateProcess(task: Task) {
         this.task = task;
+        let taskBudget : Budget = task.budget;
         const term = task.term;
         this.data = [];
         const subterms = term.subTerms().toArray();
 
         // Add task links
         _.forEach(subterms, (sub_term) => {
-            const concept = this.pickOrGenerateConcept(sub_term);
+            const concept = this.pickOrGenerateConcept(sub_term, taskBudget);
             if (!concept) {
                 throw new Error("Concept cannot be null");
             }
@@ -117,8 +119,8 @@ export class Memory {
         const relationship: [Term, Term][] = Term.getAncestorPairs(term);
         const swapped_relationship: [Term, Term][] = _.map(relationship, ([a, b]) => [b, a] as [Term, Term]);
         _.forEach(swapped_relationship, ([source, target]) => {
-            const concept_source = this.pickOrGenerateConcept(source);
-            const concept_target = this.pickOrGenerateConcept(target);
+            const concept_source = this.pickOrGenerateConcept(source, taskBudget);
+            const concept_target = this.pickOrGenerateConcept(target, taskBudget);
             if (!concept_source || !concept_target) {
                 throw new Error("Concept cannot be null");
             }
@@ -153,13 +155,22 @@ export class Memory {
         this.data = [];
     }
 
-    public pickOrGenerateConcept(term: Term): Concept | null {
+    public pickOrGenerateConcept(term: Term, taskBudget: Budget): Concept {
         const name = term.name();
-        const oldConcept = this._conceptsBag.pickOut(name);
+        let concept = this._conceptsBag.pickOut(name);
+        if (concept) {
+            // Update the concept's budget values
+            concept.priority = MathFunctions.or(concept.priority, taskBudget.priority);
+            concept.durability = MathFunctions.or(concept.durability, taskBudget.durability);
+            concept.quality = Math.max(concept.quality, taskBudget.quality);
+        } else {
+            // Create a new concept if it doesn't exist
+            concept = new Concept(term);
+        }
 
-        const newConcept = oldConcept ? cloneDeep(oldConcept) : new Concept(term);
-        this._conceptsBag.putIn(newConcept);
-        return newConcept;
+        this._conceptsBag.putIn(concept);
+        return concept;
     }
+ 
 
 }

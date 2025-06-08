@@ -49,9 +49,9 @@ export class Term implements Identifiable {
     variable(): string { return this._variable; }
 
     hasVariable(): boolean { return this._hasVariable; }
-    hasVariableDependant(): boolean { return this._hasDependantVariable; }
-    hasVariableIndependent(): boolean { return this._hasIndependentVariable; }
-    hasVariableQuery(): boolean { return this._hasQueryVariable; }
+    hasDependantVariable(): boolean { return this._hasDependantVariable; }
+    hasIndependentVariable(): boolean { return this._hasIndependentVariable; }
+    hasQueryVariable(): boolean { return this._hasQueryVariable; }
 
     /** ========== CONTROLLED SETTERS ========== */
     set complexity(val: number) {

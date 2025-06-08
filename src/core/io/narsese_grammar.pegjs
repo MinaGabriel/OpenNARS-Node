@@ -48,14 +48,11 @@ task = budget:budget? _ sentence:sentence { return makeTask(sentence, budget); }
 sentence
   = judgment
   / question
-  / goal
-  / quest
+  / goal 
 
 judgment = term:(statement / compound) _ "." _ tense:tense? _ truth:truth? { return new options.Judgement(term, ".", truth, tense); }
 question = term:(statement / compound) _ "?" _ tense:tense? { return new options.Question(); } //TODO
-goal     = term:(statement / compound) _ "!" _ tense:tense? _ desire:desire? { return new options.Goal(); }  //TODO
-quest    = term:(statement / compound) _ "@" _ tense:tense? { return new options.Quest(); } //TODO
-
+goal     = term:(statement / compound) _ "!" _ tense:tense? _ desire:desire? { return new options.Goal(); }  //TODO 
 statement
   = "<" _ subject:term _ copula:copula _ predicate:term _ ">" { return new options.Statement(subject, copula, predicate, options.TermType.STATEMENT); }
   / "(" _ subject:term _ copula:copula _ predicate:term _ ")" { return new options.Statement(subject, copula, predicate); }

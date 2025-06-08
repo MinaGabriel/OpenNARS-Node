@@ -43,7 +43,7 @@ export class RuleFunctions {
      */
 
   static solutionQuality(problem: Task, solution: Sentence, rateOfConfidence: boolean): number {
-    if (problem.sentence.punctuation !== solution.punctuation && solution.term.hasVariableQuery()) return 0.0;
+    if (problem.sentence.punctuation !== solution.punctuation && solution.term.hasQueryVariable()) return 0.0;
 
     let truth = solution.truth;
     if (problem.sentence.stamp.occurrenceTime !== solution.stamp.occurrenceTime) {

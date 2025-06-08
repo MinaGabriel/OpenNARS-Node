@@ -2806,7 +2806,7 @@ function peg$parse(input, options) {
       const [priority, durability, quality] = budget || [];
       const p = priority ?? def.p;
       const d = durability ?? def.d;
-      const q = quality ?? (sentence.truth ? options.BudgetFunctions.truthToQuality(sentence.truth) :  def.q);
+      const q = quality ?? (sentence.truth ? options.TruthFunctions.truthToQuality(sentence.truth) :  def.q);
       console.log(sentence) ;
       return new options.Task(
         sentence, 

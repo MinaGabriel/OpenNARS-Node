@@ -123,5 +123,6 @@ export class BudgetFunctions {
         // Return new Budget and modified budgets
         return [new Budget(undefined, priority, durability, quality), taskBudget, tasklinkBudget, termlinkBudget];
     }
+ 
 }
 

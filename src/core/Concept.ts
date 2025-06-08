@@ -59,11 +59,8 @@ class Concept extends Item implements Identifiable {
     get beliefs(): Task[] { return this._beliefs; }
     get term(): Term { return this._term; }
     public directProcess(task: Task): void {
-        if (task.sentence.isJudgement()) {
-            this.processJudgment(task);
-        } else {
-            //this.processQuestion(task);
-        }
+        if (task.sentence.isJudgement()) this.processJudgment(task); 
+        if (task.sentence.isQuestion()) this.processQuestion(task);
 
         //TODO: skipped the above threshold logic I don't understand it for now.
 
@@ -76,7 +73,10 @@ class Concept extends Item implements Identifiable {
 
     }
 
+    private processQuestion(newTask: Task): void {
+    
 
+    }
     private processJudgment(newTask: Task): void {
         LogFunctions.info(`Concept.processJudgment: Processing new judgment: ${newTask.sentence}`);
         // Step 1: Find matching belief with highest truth value OpenNARS 3.1.0 @concept.selectCandidate
@@ -89,14 +89,15 @@ class Concept extends Item implements Identifiable {
             if (RuleFunctions.revisable(newTask.sentence, oldBelief.sentence)) {
                 const believedRevisedTask: Task = this.localRevision(newTask, oldBelief);
                 //reduce priority by achieving the same belief 
-                
-            }
-
+                newTask.reducePriorityByAchievingLevel(oldBelief); 
+            } 
 
         }
-        Concept.addToTable(newTask, this._beliefs, Parameters.CONCEPT_BELIEFS_MAX, true);
-        // Step 3: If no candidate exists, add the judgment as a new belief
-    }
+
+        if (newTask.budget.summary() > Parameters.BUDGET_THRESHOLD){
+            Concept.addToTable(newTask, this._beliefs, Parameters.CONCEPT_BELIEFS_MAX, true); 
+        }
+    } 
     public localRevision(task: Task, belief: Task): Task {
         const taskTerm = task.sentence.term;
 
@@ -121,12 +122,7 @@ class Concept extends Item implements Identifiable {
         return task;
     }
 
-    static addToTable(
-        newTask: Task,
-        table: Task[],
-        capacity: number,
-        rankTruthExpectation: boolean
-    ): Task | null {
+    static addToTable( newTask: Task, table: Task[], capacity: number, rankTruthExpectation: boolean ): Task | null {
         const newSentence = newTask.sentence;
         const rank1 = BudgetFunctions.rankBelief(newSentence, rankTruthExpectation);
 

@@ -288,7 +288,7 @@ export class TruthFunctions {
      */
     static truthToQuality = (truth: Truth): number => {
         const expectation = truth.getExpectation();
-        return Math.max(expectation, (1 - expectation) * 0.75);
+        return Math.max(expectation, (1 - expectation) * 0.75); //TRACK::WHY 0.75? 
     };
 
 }

@@ -29,9 +29,11 @@ class NarseseChannel {
             const task = this.parser.parse(text);
             //If Sentence is not eternal set occurrence time. 
             if (task && !task.sentence.isEternal()) {
-                task.sentence.stamp.setOccurrenceTime(MemoryStore.getState().time.narsClock());
+                task.sentence.stamp.occurrenceTime = MemoryStore.getState().time.narsClock();
             }
-            task?.sentence.stamp.setCreationTime(MemoryStore.getState().time.narsClock(), Parameters.DURATION);
+            if (task) {
+                task.sentence.stamp.creationTime = MemoryStore.getState().time.narsClock();
+            }
 
             return [true, task, null];
         } catch (error) {

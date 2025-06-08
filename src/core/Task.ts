@@ -35,5 +35,10 @@ export class Task extends Item implements Identifiable {
     return this._sentence.term;
   }
 
+  reducePriorityByAchievingLevel(belief :Task){ // to give chance to other tasks since this one is already achieved
+    const h = this.sentence.achievingLevel(belief);
+    this._budget.reduceByAchievingLevel(h);
+  }
+
 
 }
