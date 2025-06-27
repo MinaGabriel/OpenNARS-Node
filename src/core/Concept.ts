@@ -32,13 +32,15 @@ class Concept extends Item implements Identifiable {
     private _term: Term;
     private _taskLinksBag: TaskLinkBag;
     private _termLinksBag: TermLinkBag;
+    /**
+     * Pending Question directly asked about the term **/
     private _questions: Task[] = [];
+    private _quests: Task[] = [];
     /**
      * Sentences directly made about the term, with non-future tense
      */
     private _beliefs: Task[] = [];
-
-
+    private _desires: Task[] = [];
 
     constructor(term: Term) {
         super(term.name());
@@ -59,8 +61,8 @@ class Concept extends Item implements Identifiable {
     get beliefs(): Task[] { return this._beliefs; }
     get term(): Term { return this._term; }
     public directProcess(task: Task): void {
-        if (task.sentence.isJudgement()) this.processJudgment(task); 
-        if (task.sentence.isQuestion()) this.processQuestion(task);
+        if (task.sentence.isJudgement()) this.processJudgment(task);
+        if (task.sentence.isQuestion()) this.processQuestionOrQuest(task);
 
         //TODO: skipped the above threshold logic I don't understand it for now.
 
@@ -72,11 +74,28 @@ class Concept extends Item implements Identifiable {
         const task_budget = task.budget;
 
     }
+    private processQuestionOrQuest(newTask: Task): void {
+        let questionTask: Task = newTask;
 
-    private processQuestion(newTask: Task): void {
-    
+        // Select the appropriate list (questions or quests) based on punctuation
+        let questions: Task[] = (questionTask.sentence.punctuation === Punctuation.QUEST) ? this._quests : this._questions;
 
+        // Remove the oldest task if we've reached the max allowed number (FIFO)
+        if (questions.length >= Parameters.CONCEPT_QUESTIONS_MAX) {
+            questions.shift(); // removes the first (oldest) item in-place
+        }
+
+        // Add the new task to the appropriate list
+        questions.push(questionTask);
+
+        // Select an answer based on whether it's a question (uses beliefs) or a quest (uses desires)
+        const answer: Task | null = questionTask.sentence.isQuestion()
+            ? this.selectCandidate(questionTask, this._beliefs)
+            : this.selectCandidate(questionTask, this._desires);
+
+            
     }
+
     private processJudgment(newTask: Task): void {
         LogFunctions.info(`Concept.processJudgment: Processing new judgment: ${newTask.sentence}`);
         // Step 1: Find matching belief with highest truth value OpenNARS 3.1.0 @concept.selectCandidate
@@ -89,15 +108,17 @@ class Concept extends Item implements Identifiable {
             if (RuleFunctions.revisable(newTask.sentence, oldBelief.sentence)) {
                 const believedRevisedTask: Task = this.localRevision(newTask, oldBelief);
                 //reduce priority by achieving the same belief 
-                newTask.reducePriorityByAchievingLevel(oldBelief); 
-            } 
+                newTask.reducePriorityByAchievingLevel(oldBelief);
+            }
 
         }
 
-        if (newTask.budget.summary() > Parameters.BUDGET_THRESHOLD){
-            Concept.addToTable(newTask, this._beliefs, Parameters.CONCEPT_BELIEFS_MAX, true); 
+        if (newTask.budget.summary() > Parameters.BUDGET_THRESHOLD) {
+            Concept.addToTable(newTask, this._beliefs, Parameters.CONCEPT_BELIEFS_MAX, true);
+
+            //Try to solve a question if it exists
         }
-    } 
+    }
     public localRevision(task: Task, belief: Task): Task {
         const taskTerm = task.sentence.term;
 
@@ -122,19 +143,19 @@ class Concept extends Item implements Identifiable {
         return task;
     }
 
-    static addToTable( newTask: Task, table: Task[], capacity: number, rankTruthExpectation: boolean ): Task | null {
+    static addToTable(newTask: Task, table: Task[], capacity: number, rankTruthExpectation: boolean): Task | null {
         const newSentence = newTask.sentence;
-        const rank1 = BudgetFunctions.rankBelief(newSentence, rankTruthExpectation);
+        const rankOne = BudgetFunctions.rankBelief(newSentence, rankTruthExpectation);
 
         for (let i = 0; i < table.length; i++) {
-            const sentence2 = table[i].sentence;
-            const rank2 = BudgetFunctions.rankBelief(sentence2, rankTruthExpectation);
-            if (rank1 >= rank2) {
+            const sentence = table[i].sentence;
+            const rankTwo = BudgetFunctions.rankBelief(sentence, rankTruthExpectation);
+            if (rankOne >= rankTwo) {
                 if (
-                    newSentence.truth.equals(sentence2.truth) &&
-                    newSentence.stamp.equals(sentence2.stamp, false, true, true)
+                    newSentence.truth.equals(sentence.truth) &&
+                    newSentence.stamp.equals(sentence.stamp, false, true, true)
                 ) {
-                    console.log(` ---------- Equivalent Belief: ${newSentence} == ${sentence2}`);
+                    console.log(` ---------- Equivalent Belief: ${newSentence} == ${sentence}`);
                     return null;
                 }
                 table.splice(i, 0, newTask); // insert at index i

@@ -5,13 +5,18 @@ import { Budget } from "./Budget";
 import { Term } from "./Term";
 import { TaskType } from "./enums/Enums";
 import { Identifiable } from "./interface/Identifiable";
+import { setEngine } from "crypto";
 /**
  * Task class representing a NARS task
  * Extends the base Item class
  */
 export class Task extends Item implements Identifiable {
   private _sentence: Sentence;
+  //best Goal or Question answer found for this task.  
+  private _bestSolution: Sentence | null = null;
+
   protected _budget: Budget;
+
   taskType: TaskType = TaskType.INPUT;
 
   constructor(sentence: Sentence, budget: Budget) {
@@ -35,10 +40,16 @@ export class Task extends Item implements Identifiable {
     return this._sentence.term;
   }
 
-  reducePriorityByAchievingLevel(belief :Task){ // to give chance to other tasks since this one is already achieved
+  public get bestSolution(): Sentence | null{
+    return this._bestSolution;
+  }
+  public set bestSolution(value: Sentence) {
+    this._bestSolution = value;
+  }
+
+  reducePriorityByAchievingLevel(belief: Task) {
+    // to give chance to other tasks since this one is already achieved
     const h = this.sentence.achievingLevel(belief);
     this._budget.reduceByAchievingLevel(h);
   }
-
-
 }
