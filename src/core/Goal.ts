@@ -1,6 +1,5 @@
 import { Truth } from './Truth';
-import { Punctuation } from './enums/Enums';
-import { Base } from './Base';
+import { Punctuation } from './enums/Enums'; 
 import { Term } from './Term';
 import { Memory } from './storage/Memory';
 import { Sentence } from './Sentence';

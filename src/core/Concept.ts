@@ -116,7 +116,8 @@ class Concept extends Item implements Identifiable {
         if (newTask.budget.summary() > Parameters.BUDGET_THRESHOLD) {
             Concept.addToTable(newTask, this._beliefs, Parameters.CONCEPT_BELIEFS_MAX, true);
 
-            //Try to solve a question if it exists
+            //Try to solve a question if there is any 
+            
         }
     }
     public localRevision(task: Task, belief: Task): Task {
