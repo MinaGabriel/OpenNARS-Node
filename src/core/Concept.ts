@@ -93,7 +93,39 @@ class Concept extends Item implements Identifiable {
             ? this.selectCandidate(questionTask, this._beliefs)
             : this.selectCandidate(questionTask, this._desires);
 
-            
+        if (answer !== null) {
+            //Try Solution 
+        }
+
+
+    }
+
+    // TrySolution is in this file it is only used with ProcessJudgment ProcessQuestionOrQuest and ProcessGoal
+    // TODO: this will will not be just for questions but also for quests and goals maybe 
+    private TrySolution(belief: Sentence, task: Task): void {
+
+    }
+    /**
+     * Calculates the "achievement" of a new truth compared to an old one.
+     *
+     * - If there is no old truth, the achievement is just the new truth's expectation.
+     * - If both old and new truths exist, the achievement is the absolute difference 
+     *   between their expectations.
+     *
+     * Expectation combines frequency and confidence into a single score in [0,1].
+     * The achievement value shows how much the new belief improves or changes 
+     * what was already known.
+     *
+     * Example:
+     *   Old belief: <bird → fly>. %0.5;0.6% → Expectation ≈ 0.55
+     *   New belief: <bird → fly>. %0.9;0.9% → Expectation ≈ 0.81
+     *   Achievement = |0.81 - 0.55| = 0.26 (high improvement)
+     */
+    private calcTaskAchievement(t1: Truth, t2: Truth): number {
+        if (t1 == null) {
+            return t2.getExpectation();
+        }
+        return Math.abs(t1.getExpectation() - t2.getExpectation());
     }
 
     private processJudgment(newTask: Task): void {
@@ -116,10 +148,11 @@ class Concept extends Item implements Identifiable {
         if (newTask.budget.summary() > Parameters.BUDGET_THRESHOLD) {
             Concept.addToTable(newTask, this._beliefs, Parameters.CONCEPT_BELIEFS_MAX, true);
 
-            //Try to solve a question if there is any 
-            
+            //Try to solve a question if there is any may be can find a better answer
+
         }
     }
+
     public localRevision(task: Task, belief: Task): Task {
         const taskTerm = task.sentence.term;
 
