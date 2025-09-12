@@ -101,7 +101,7 @@ class Concept extends Item implements Identifiable {
     }
 
     // TrySolution is in this file it is only used with ProcessJudgment ProcessQuestionOrQuest and ProcessGoal
-    // TODO: this will will not be just for questions but also for quests and goals maybe 
+    //TODO: this will will not be just for questions but also for quests and goals maybe
     private TrySolution(belief: Sentence, task: Task): void {
 
     }
@@ -167,12 +167,14 @@ class Concept extends Item implements Identifiable {
         const taskStamp = taskSentence.stamp;
         const beliefStamp = beliefSentence.stamp;
 
-        const truthDerived = TruthFunctions.revision(truthTask, truthBelief);
-        const [budgetDerived, ...others] = BudgetFunctions.revision(budgetTask, truthTask, truthBelief, truthDerived);
-        const stampDerived = StampFunctions.revision(taskStamp, beliefStamp);
+        if (truthTask && truthBelief) {
+            const truthDerived = TruthFunctions.revision(truthTask, truthBelief);
+            const [budgetDerived, ...others] = BudgetFunctions.revision(budgetTask, truthTask, truthBelief, truthDerived);
+            const stampDerived = StampFunctions.revision(taskStamp, beliefStamp);
 
-        if (taskSentence.isJudgement()) return new Task(new Judgement(taskTerm, Punctuation.JUDGMENT, truthDerived,
-            stampDerived?.tense, stampDerived), budgetDerived)
+            if (taskSentence.isJudgement()) return new Task(new Judgement(taskTerm, Punctuation.JUDGMENT, truthDerived,
+                stampDerived?.tense, stampDerived), budgetDerived)
+        }
 
         return task;
     }
@@ -186,6 +188,8 @@ class Concept extends Item implements Identifiable {
             const rankTwo = BudgetFunctions.rankBelief(sentence, rankTruthExpectation);
             if (rankOne >= rankTwo) {
                 if (
+                    newSentence.truth != null &&
+                    sentence.truth != null &&
                     newSentence.truth.equals(sentence.truth) &&
                     newSentence.stamp.equals(sentence.stamp, false, true, true)
                 ) {

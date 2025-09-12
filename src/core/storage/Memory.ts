@@ -65,7 +65,7 @@ export class Memory {
                 this.immediateProcess(task);
             } else {
                 const sentence: Sentence = task.sentence;
-                if (sentence.isJudgement()) {
+                if (sentence.isJudgement() && sentence.truth !== null) {
                     const expectation = sentence.truth.getExpectation();
                     if (expectation > Parameters.DEFAULT_CREATION_EXPECTATION) {
                         const putInNovel = this._novelTasksBag.putIn(task);

@@ -49,6 +49,9 @@ export class RuleFunctions {
     if (problem.sentence.stamp.occurrenceTime !== solution.stamp.occurrenceTime) {
       truth = TruthFunctions.projectionTruth(problem.sentence, solution)
     }
+    if (!truth) {
+      return 0.0;
+    }
     const complexity = solution.term.complexity;
     const rTermComplexityUnit = Parameters.COMPLEXITY_UNIT;
     return rateOfConfidence

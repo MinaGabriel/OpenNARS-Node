@@ -12,6 +12,7 @@ import { BudgetFunctions } from './inference/BudgetFunctions';
 import { Connector } from './Connector';
 import { Compound } from './Compound';  
 import { TruthFunctions } from './inference/TruthFunctions';
+import { Question } from './Question';
 // Import the precompiled parser
 // @ts-ignore
 import narseseParser from './io/narsese_grammar.js'; //  Use --> npm run build:grammar
@@ -60,6 +61,7 @@ class NarseseParser {
                 ConnectorType,
                 Compound,
                 TruthFunctions,
+                Question
             });
 
             //ParseTruth if null 

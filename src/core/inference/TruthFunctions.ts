@@ -253,6 +253,9 @@ export class TruthFunctions {
      * @returns Adjusted truth value of the belief
      */
     static projectionTruth(premiseOne: Premise, premiseTwo: Premise): Truth {
+        if (!premiseTwo.truth) {
+            throw new Error("premiseTwo.truth is null");
+        }
         let truth: Truth = premiseTwo.truth;
 
         if (!premiseTwo.stamp.isEternal) {

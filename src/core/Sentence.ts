@@ -13,13 +13,13 @@ import { Task } from "./Task";
 abstract class Sentence implements Identifiable {
     protected readonly _term: Term;
     protected readonly _punctuation: Punctuation;
-    protected readonly _truth: Truth;
+    protected readonly _truth: Truth | null;
     protected readonly _stamp: Stamp;
 
     constructor(
         term: Term,
         punctuation: Punctuation,
-        truth: Truth,
+        truth: Truth | null,
         stamp: Stamp
     ) {
         this._term = term;
@@ -65,7 +65,7 @@ abstract class Sentence implements Identifiable {
     get punctuation(): Punctuation {
         return this._punctuation;
     }
-    get truth(): Truth {
+    get truth(): Truth | null {
         return this._truth;
     }
     get stamp(): Stamp {
@@ -117,45 +117,23 @@ abstract class Sentence implements Identifiable {
     public isEternal(): boolean {
         return this._stamp.isEternal();
     }
-     
-    
+
+
     atoms(): Term[] {
         let terms: Term[] = [];
-        function collectAtoms(term : Term): void {
+        function collectAtoms(term: Term): void {
             const children: Term[] = Array.from(term.terms);
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
-                 if (child.isStatement() || child.isCompound()) collectAtoms(child);
-                 if (child.isAtom())terms.push(child);
-            } 
+                if (child.isStatement() || child.isCompound()) collectAtoms(child);
+                if (child.isAtom()) terms.push(child);
+            }
         }
         collectAtoms(this.term);
         return terms;
     }
 
 
-    achievingLevel(previousBelief: Task | null): number {
-        if (!previousBelief) {
-            if (this.isJudgement() || this.isGoal()) {
-                return Math.abs(this.truth.getExpectation() - 0.5);
-            }
-            if (this.isQuestion()) {
-                return 0;
-            }
-            throw new Error("achievingLevel: No previous belief and sentence type is not supported.");
-        }
-
-        if (this.isJudgement() || this.isGoal()) {
-            return 1 - Math.abs(this.truth.getExpectation() - previousBelief.sentence.truth.getExpectation());
-        }
-        if (this.isQuestion()) {
-            return this.containQueryVariable() //FIXME: Check logic in this
-                ? previousBelief.sentence.truth.getExpectation()
-                : previousBelief.sentence.truth.getConfidence();
-        }
-
-        throw new Error("achievingLevel: Sentence type is not supported.");
-    }
 }
 
 export { Sentence };
