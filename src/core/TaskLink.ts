@@ -18,7 +18,7 @@ class TaskLink extends Link {
     //source: A and target: is the task <A --> (/, A, L)> .
     constructor(source: Concept, target: Task, budget: Budget) {
         super(source, target, budget, true, true);
-        console.log(`Task Link: ${colors.green(this.target.toString())} ${colors.yellow(_.isArray(this.index) && this.index.length > 0 ? JSON.stringify(this.index) : "")} ${LinkType[this.type as number] ?? ""}`);
+        //console.log(`Task Link: ${colors.green(this.target.toString())} ${colors.yellow(_.isArray(this.index) && this.index.length > 0 ? JSON.stringify(this.index) : "")} ${LinkType[this.type as number] ?? ""}`);
     }
     toString(): string {
         return `Task Link: ${colors.green(this.target.toString())} ${colors.yellow(_.isArray(this.index) && this.index.length > 0 ? JSON.stringify(this.index) : "")} ${LinkType[this.type as number] ?? ""}`;

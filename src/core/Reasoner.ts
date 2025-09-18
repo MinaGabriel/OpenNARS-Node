@@ -16,16 +16,14 @@ export class Reasoner {
   inputNarsese(text: string): [boolean, Task | null, Task | null] {
     if (!isNaN(Number(text.trim())) && text.trim() !== '') {
       const cycles = parseInt(text.trim());
-      for (let i = 0; i < cycles; i++) {
-        this._memory.workCycle();
+      for (let i = 0; i < cycles; i++) { 
         this._time.tick();
       }
       return [true, null, null];
     } else {
       const [success, task, overflow] = this._channel.put(text);
       if (task) {
-        this._memory.input(task);
-        this._memory.workCycle();
+        this._memory.input(task); 
         this._time.tick();
       }
       return [success, task, overflow];

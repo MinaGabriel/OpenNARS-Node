@@ -12,8 +12,9 @@ import { setEngine } from "crypto";
  */
 export class Task extends Item implements Identifiable {
   private _sentence: Sentence;
-  //best Goal or Question answer found for this task.  
+  //best Goal or Question answer found for this task.
   private _bestSolution: Sentence | null = null;
+  private _achievement: number | null = null;
 
   protected _budget: Budget;
 
@@ -28,7 +29,7 @@ export class Task extends Item implements Identifiable {
     return this._sentence.toString();
   }
   toString(): string {
-    return `${this._sentence.toString()}`;
+    return `${this._budget.toString()} ${this._sentence.toString()}`;
   }
   isInput(): boolean {
     return this.taskType === TaskType.INPUT;
@@ -40,15 +41,18 @@ export class Task extends Item implements Identifiable {
     return this._sentence.term;
   }
 
-  public get bestSolution(): Sentence | null{
+  public get bestSolution(): Sentence | null {
     return this._bestSolution;
   }
   public set bestSolution(value: Sentence) {
     this._bestSolution = value;
   }
 
-  reducePriorityByAchievingLevel(belief: Task) {
-    // to give chance to other tasks since this one is already achieved
-     
+  public get achievement(): number | null {
+    return this._achievement;
   }
+  public set achievement(value: number | null) {
+    this._achievement = value;
+  }
+ 
 }

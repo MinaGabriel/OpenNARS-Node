@@ -28,7 +28,7 @@ export class RuleFunctions {
  
 
   /**
-     * Computes the quality of a solution (task) as an answer to a problem (belief).
+     * Computes the quality of a solution (task) as an answer to a problem (task).
      * Implements answer evaluation from Non-Axiomatic Logic (NAL).
      * 
      * Reference:
@@ -41,21 +41,16 @@ export class RuleFunctions {
      * @param rateOfConfidence - If true, returns confidence; else, expectation adjusted by complexity
      * @returns Quality score (confidence or complexity-adjusted expectation)
      */
-
+  //TEMPORAL
   static solutionQuality(problem: Task, solution: Sentence, rateOfConfidence: boolean): number {
     if (problem.sentence.punctuation !== solution.punctuation && solution.term.hasQueryVariable()) return 0.0;
+    
+    if (!solution.truth) return 0.0;
 
-    let truth = solution.truth;
-    if (problem.sentence.stamp.occurrenceTime !== solution.stamp.occurrenceTime) {
-      truth = TruthFunctions.projectionTruth(problem.sentence, solution)
-    }
-    if (!truth) {
-      return 0.0;
-    }
     const complexity = solution.term.complexity;
     const rTermComplexityUnit = Parameters.COMPLEXITY_UNIT;
     return rateOfConfidence
-      ? Number(truth.confidence)
-      : truth.getExpectation() / Math.sqrt(Math.sqrt(Math.sqrt(complexity * rTermComplexityUnit)));
+      ? Number(solution.truth.confidence)
+      : solution.truth.getExpectation() / Math.sqrt(Math.sqrt(Math.sqrt(complexity * rTermComplexityUnit)));
   }
 }

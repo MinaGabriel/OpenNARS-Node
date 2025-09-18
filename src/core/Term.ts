@@ -14,7 +14,6 @@ export class Term implements Identifiable {
     private _hasIndependentVariable: boolean = false;
     private _hasQueryVariable: boolean = false;
 
-
     constructor(private readonly _name: string, private readonly _type: TermType, private readonly _variable: string = "") {
         switch (_variable) {
             case Symbols.VAR_INDEPENDENT:
@@ -39,6 +38,7 @@ export class Term implements Identifiable {
     get terms(): Set<Term> { return new Set(this._terms); }
     get components(): Set<Term> { return new Set(this._components); }
     get temporalOrder(): TemporalTypes { return TemporalTypes.ORDER_NONE; }
+    get simplicity(): number{ return Math.pow(this.complexity , -1.0)}   //TOOBAD: Need to know when is this 0.5 and 1.0 Issue 1
 
     name(): string { return this._name; }
     toString(): string { return this._name;}
@@ -59,7 +59,7 @@ export class Term implements Identifiable {
     }
 
     /** ========== METHODS ========== */
-
+    
     
 
     public subTerms(): ImmutableOrderedSet<Term> {

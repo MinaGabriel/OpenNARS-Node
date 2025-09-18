@@ -1,75 +1,86 @@
-// ───── Imports ─────
-import { Budget } from "../Budget";
-import { Concept } from "../Concept";
-import { Sentence } from "../Sentence";
-import { Truth } from "../Truth";
-import { Term } from '../Term';
-import { table } from "table"; //  npm install table
-import _ from 'lodash';
-import colors from 'ansi-colors';
-import { MemoryStore } from '../storage/MemoryStore';
-import { Task } from '../Task';
-import { Judgement } from '../Judgement';
-import { Goal } from '../Goal';
-import { Question } from '../Question';
-import winston from 'winston';
-import fs from 'fs';
-import path from 'path';
-import stringify from 'json-stringify-pretty-compact';
-import { Parameters } from "../Parameters";
-import { TemporalTypes } from "../enums/Enums";
-import { Stamp } from "../Stamp";
+// LogFunctions.ts
+import fs from "fs";
+import path from "path";
+import colors from "ansi-colors";
+import stringify from "json-stringify-pretty-compact";
 
 export class LogFunctions {
-    private static logDir = './logs';
-    private static logFile = path.join(LogFunctions.logDir, 'app.log');
+  private static logDir = path.resolve(__dirname, "logs");
+  private static logFile = path.join(this.logDir, "app.log");
+  private static initialized = false;
 
-    private static consoleLogger = winston.createLogger({
-        level: 'info',
-        format: winston.format.printf(({ level, message }) => {
-            let coloredMessage = message;
-            if (level === 'info') coloredMessage = colors.green(message as string);
-            else if (level === 'warn') coloredMessage = colors.yellow(message as string);
-            else if (level === 'error') coloredMessage = colors.red(message as string);
-            return `[${level.toUpperCase()}]: ${coloredMessage}`;
-        }),
-        transports: [new winston.transports.Console()],
-    });
+  static init(filename = "app.log"): void {
+    if (this.initialized) return;
+    this.logFile = path.join(this.logDir, filename);
+    fs.mkdirSync(this.logDir, { recursive: true });
+    if (fs.existsSync(this.logFile)) fs.unlinkSync(this.logFile);
+    fs.writeFileSync(this.logFile, "", "utf8");
+    this.initialized = true;
+    this.both.info("LogFunctions initialized - file and console logging active");
+  }
 
-    private static fileLogger = winston.createLogger({
-        level: 'info',
-        format: winston.format.combine(
-            winston.format.timestamp(),
-            winston.format.printf(({ timestamp, level, message }) => {
-                return `[${timestamp}] [${level.toUpperCase()}]: ${message}`;
-            })
-        ),
-        transports: [new winston.transports.File({ filename: LogFunctions.logFile })],
-    });
+  private static ensureInit(): void { if (!this.initialized) this.init(); }
+  
+  private static writeToFile(level: string, msg: string): void {
+    this.ensureInit();
+    const timestamp = new Date().toISOString();
+    const line = `[${timestamp}] [${level}]: ${msg}\n`;
+    fs.appendFileSync(this.logFile, line);
+  }
 
-    static setup(): void {
-        if (!fs.existsSync(LogFunctions.logDir)) {
-            fs.mkdirSync(LogFunctions.logDir);
-        }
-        fs.writeFileSync(LogFunctions.logFile, '', 'utf8'); // clear on start
+  private static writeToConsole(level: string, msg: string): void {
+    const colorMap = { INFO: colors.green, WARN: colors.yellow, ERROR: colors.red };
+    const colorFn = colorMap[level as keyof typeof colorMap] || ((x: string) => x);
+    console.log(`[${level}]: ${colorFn(msg)}`);
+  }
+
+  // ═══ CONSOLE ONLY LOGGING ═══
+  static console = {
+    info: (msg: string) => LogFunctions.writeToConsole("INFO", msg),
+    warn: (msg: string) => LogFunctions.writeToConsole("WARN", msg),
+    error: (msg: string) => LogFunctions.writeToConsole("ERROR", msg),
+    json: (label: string, obj: unknown) => LogFunctions.writeToConsole("INFO", `${label}:\n${stringify(obj)}`)
+  };
+
+  // ═══ FILE ONLY LOGGING ═══
+  static file = {
+    info: (msg: string) => LogFunctions.writeToFile("INFO", msg),
+    warn: (msg: string) => LogFunctions.writeToFile("WARN", msg),
+    error: (msg: string) => LogFunctions.writeToFile("ERROR", msg),
+    json: (label: string, obj: unknown) => LogFunctions.writeToFile("INFO", `${label}:\n${stringify(obj)}`)
+  };
+
+  // ═══ BOTH CONSOLE AND FILE LOGGING ═══
+  static both = {
+    info: (msg: string) => { LogFunctions.writeToConsole("INFO", msg); LogFunctions.writeToFile("INFO", msg); },
+    warn: (msg: string) => { LogFunctions.writeToConsole("WARN", msg); LogFunctions.writeToFile("WARN", msg); },
+    error: (msg: string) => { LogFunctions.writeToConsole("ERROR", msg); LogFunctions.writeToFile("ERROR", msg); },
+    json: (label: string, obj: unknown) => { 
+      const content = `${label}:\n${stringify(obj)}`;
+      LogFunctions.writeToConsole("INFO", content); 
+      LogFunctions.writeToFile("INFO", content); 
     }
+  };
 
-    static info(msg: string): void {
-        LogFunctions.consoleLogger.info(msg);
-        LogFunctions.fileLogger.info(msg);
-    }
+  // ═══ LEGACY COMPATIBILITY (defaults to both) ═══
+  static info = (msg: string) => LogFunctions.both.info(msg);
+  static warn = (msg: string) => LogFunctions.both.warn(msg);
+  static error = (msg: string) => LogFunctions.both.error(msg);
+  static appendJson = (label: string, obj: unknown) => LogFunctions.both.json(label, obj);
 
-    static warn(msg: string): void {
-        LogFunctions.consoleLogger.warn(msg);
-        LogFunctions.fileLogger.warn(msg);
-    }
-
-    static error(msg: string): void {
-        LogFunctions.consoleLogger.error(msg);
-        LogFunctions.fileLogger.error(msg);
-    }
-
-    static appendJson(label: string, obj: any): void {
-        LogFunctions.fileLogger.info(`${label}:\n${stringify(obj)}`);
-    }
+  // ═══ UTILITY FUNCTIONS ═══
+  static getLogFilePath = (): string => { LogFunctions.ensureInit(); return LogFunctions.logFile; };
+  static fileExists = (): boolean => { LogFunctions.ensureInit(); return fs.existsSync(LogFunctions.logFile); };
+  static fileSize = (): number => { LogFunctions.ensureInit(); return fs.existsSync(LogFunctions.logFile) ? fs.statSync(LogFunctions.logFile).size : 0; };
+  static clearFile = (): void => { LogFunctions.ensureInit(); fs.writeFileSync(LogFunctions.logFile, "", "utf8"); };
+  static readFile = (): string => { LogFunctions.ensureInit(); return fs.existsSync(LogFunctions.logFile) ? fs.readFileSync(LogFunctions.logFile, "utf8") : ""; };
+  static reset = (): void => { LogFunctions.initialized = false; LogFunctions.init(); };
+  
+  static status = (): void => {
+    LogFunctions.ensureInit();
+    const exists = fs.existsSync(LogFunctions.logFile);
+    const size = exists ? fs.statSync(LogFunctions.logFile).size : 0;
+    console.log(`[STATUS] Log file: ${LogFunctions.logFile}`);
+    console.log(`[STATUS] Exists: ${exists} | Size: ${size} bytes | Initialized: ${LogFunctions.initialized}`);
+  };
 }

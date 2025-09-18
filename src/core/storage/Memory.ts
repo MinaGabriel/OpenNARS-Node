@@ -1,3 +1,4 @@
+
 import { Bag } from "./Bag";
 import { Concept } from "../Concept";
 import { Task } from "../Task";
@@ -20,6 +21,14 @@ import { Logger } from "winston";
 import cloneDeep from 'clone-deep';
 import { BudgetFunctions } from "../inference/BudgetFunctions";
 import { MathFunctions } from "../utils/MathFunctions";
+import { log } from "console";
+
+
+interface InputAccepted{
+    taskRevised: Task | null, 
+    
+    
+}
 
 export class Memory {
     private data: string[][] = [];
@@ -47,128 +56,38 @@ export class Memory {
         BudgetFunctions.activate(concept, budget);
         this._conceptsBag.putBack(concept);
     }
+    
+    //This is what the input function is expected to return (one or more of these)
+    
+    public input(task: Task) {
+         
+        //There is a difference between Conceptualize and Task Budget
+        const ConceptualizeBudget = new Budget(undefined, task.budget.priority,
+            task.budget.durability, 
+            task.term.simplicity //TOOBAD: Review
+        )
 
-    public workCycle(): void {
-        this.processNewTasks();
-        this.processConcept();
-    }
+        const concept = this.pickOrGenerateConcept(task.term, ConceptualizeBudget); 
 
-    public input(task: Task): void {
-
-        this._globalTasksBag.putIn(task);
-    }
-
-    public processNewTasks() {
-        const task = this._globalTasksBag.takeOut();
-        if (task) {
-            if (task.isInput() || this._conceptsBag.get(task.term.name()) !== null) {
-                this.immediateProcess(task);
-            } else {
-                const sentence: Sentence = task.sentence;
-                if (sentence.isJudgement() && sentence.truth !== null) {
-                    const expectation = sentence.truth.getExpectation();
-                    if (expectation > Parameters.DEFAULT_CREATION_EXPECTATION) {
-                        const putInNovel = this._novelTasksBag.putIn(task);
-                        if (!putInNovel) {
-                            this._globalTasksBag.putBack(task);
-                        }
-                    }
-                }
-            }
-            this._globalTasksBag.putBack(task);
+        if(task.sentence.isJudgement()){
+            concept.processJudgment(task);
         }
+
     }
 
-    private processConcept() {
-        this.currentWorkingConcept = this._conceptsBag.takeOut();
-        if (this.currentWorkingConcept !== null) {
-            this._conceptsBag.putBack(this.currentWorkingConcept);
-            this.currentWorkingConcept.fire();
-        }
-    }
-
-    private immediateProcess(task: Task) {
-        this.task = task;
-        let taskBudget : Budget = task.budget;
-        const term = task.term;
-        this.data = [];
-        const subterms = term.subTerms().toArray();
-
-        // Add task links
-        _.forEach(subterms, (sub_term) => {
-            const concept = this.pickOrGenerateConcept(sub_term, taskBudget);
-            if (!concept) {
-                throw new Error("Concept cannot be null");
-            }
-            concept.directProcess(task);
-            const task_link = new TaskLink(concept, task, task.budget);
-            this._taskLinksBag.putIn(task_link);
-            concept.taskLinks.putIn(task_link);
-
-            this.data.push([
-                `${concept.toString()} (${sub_term.key})`,
-                task.toString(),
-                LinkType[task_link.type!]?.toString() ?? "",
-                colors.yellow(_.isArray(task_link.index) && task_link.index.length > 0 ? JSON.stringify(task_link.index) : "")
-            ]);
-        });
-        console.log(table(this.data, { header: { alignment: 'center', content: 'TASK LINK TABLE' } }));
-        this.data = [];
-
-        // Add term links
-        const relationship: [Term, Term][] = Term.getAncestorPairs(term);
-        const swapped_relationship: [Term, Term][] = _.map(relationship, ([a, b]) => [b, a] as [Term, Term]);
-        _.forEach(swapped_relationship, ([source, target]) => {
-            const concept_source = this.pickOrGenerateConcept(source, taskBudget);
-            const concept_target = this.pickOrGenerateConcept(target, taskBudget);
-            if (!concept_source || !concept_target) {
-                throw new Error("Concept cannot be null");
-            }
-
-            this.activateConcept(concept_source, task.budget);
-            this.activateConcept(concept_target, task.budget);
-
-            let term_link = new TermLink(concept_target, concept_source, task.budget);
-            this._termLinksBag.putIn(term_link);
-            concept_target.termLinks.putIn(term_link);
-
-            term_link = new TermLink(concept_source, concept_target, task.budget);
-            this._termLinksBag.putIn(term_link);
-            concept_source.termLinks.putIn(term_link);
-
-            this.data.push([
-                concept_target.toString(),
-                concept_source.toString(),
-                LinkType[term_link.type!]?.toString() ?? "",
-                colors.yellow("-")
-            ]);
-
-            this.data.push([
-                concept_source.toString(),
-                concept_target.toString(),
-                LinkType[term_link.type!]?.toString() ?? "",
-                colors.yellow(_.isArray(term_link.index) && term_link.index.length > 0 ? JSON.stringify(term_link.index) : "")
-            ]);
-        });
-
-        console.log(table(this.data, { header: { alignment: 'center', content: 'TERM LINK TABLE' } }));
-        this.data = [];
-    }
-
-    public pickOrGenerateConcept(term: Term, taskBudget: Budget): Concept {
+    
+    public pickOrGenerateConcept(term: Term, taskBudget: Budget, caller?:string): Concept {
         const name = term.name();
         let concept = this._conceptsBag.pickOut(name);
-        if (concept) {
-            // Update the concept's budget values
+        if (concept) { //MERGE 
             concept.priority = MathFunctions.or(concept.priority, taskBudget.priority);
             concept.durability = MathFunctions.or(concept.durability, taskBudget.durability);
             concept.quality = Math.max(concept.quality, taskBudget.quality);
-        } else {
-            // Create a new concept if it doesn't exist
-            concept = new Concept(term);
+        } else { 
+            concept = new Concept(term, taskBudget);
         }
 
-        this._conceptsBag.putIn(concept);
+        this._conceptsBag.putBack(concept); 
         return concept;
     }
  

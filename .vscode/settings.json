@@ -46,7 +46,18 @@
             "background": "#F3E5F5", // Light lavender
             "iconColour": "#6A1B9A", // Strong purple
             "foreground": "#4A148C"
+        }, 
+        "QUESTION": {
+            "background": "#F3E5F5", // Light lavender
+            "iconColour": "#6A1B9A", // Strong purple
+            "foreground": "#4A148C"
+        },
+        "TEMPORAL": {
+            "background": "#F3E5F5", // Light lavender
+            "iconColour": "#6A1B9A", // Strong purple
+            "foreground": "#4A148C"
         }
+
     },
 
     "todo-tree.general.tags": [
@@ -57,7 +68,9 @@
         "NARSESE",
         "TRACK",
         "IMPROVE",
-        "MATH"
+        "MATH", 
+        "QUESTION",
+        "TEMPORAL"
     ],
 
     "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",

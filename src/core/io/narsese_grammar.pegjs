@@ -1,12 +1,14 @@
+/*
+npx peggy -o narsese_grammar.js narsese_grammar.pegjs 
+*/
 { 
-  function makeTask(sentence, budget) {
-    console.log("Hello") ;
+  function makeTask(sentence, budget) { 
     // Extract budget symbols with proper defaults
     const defaults = {
       '.': { // Judgment
-        p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY || 0.9,
-        d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY || 0.9,
-        q: 1.0
+        p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY,
+        d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY,
+        q: 0.95
       },
       '?': { // Question
         p: options.Parameters.DEFAULT_QUESTION_PRIORITY || 0.9,
@@ -28,8 +30,7 @@
     const [priority, durability, quality] = budget || [];
     const p = priority ?? def.p;
     const d = durability ?? def.d;
-    const q = quality ?? (sentence.truth ? options.BudgetFunctions.truthToQuality(sentence.truth) :  def.q);
-    console.log(sentence) ;
+    const q = quality ?? (sentence.truth ? options.TruthFunctions.truthToQuality(sentence.truth) :  def.q); 
     return new options.Task(
       sentence, 
       new options.Budget(null, p, d, q)

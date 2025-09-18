@@ -15,37 +15,19 @@ abstract class Sentence implements Identifiable {
     protected readonly _punctuation: Punctuation;
     protected readonly _truth: Truth | null;
     protected readonly _stamp: Stamp;
+    _bestSolution: Task | null = null;
 
-    constructor(
-        term: Term,
-        punctuation: Punctuation,
-        truth: Truth | null,
-        stamp: Stamp
-    ) {
-        this._term = term;
-        this._punctuation = punctuation;
-        this._truth = truth;
-        this._stamp = stamp;
-    }
+    constructor(term: Term, punctuation: Punctuation, truth: Truth | null, stamp: Stamp) { this._term = term; this._punctuation = punctuation; this._truth = truth; this._stamp = stamp; }
 
     /**
      * Returns a human-readable name for the sentence.
      */
     name(): string {
-        const parts: string[] = [
-            this.term?.toString() ?? "[null term]",
-            this.punctuation?.toString() ?? "[null punctuation]",
-        ];
+        const parts: string[] = [this.term?.toString() ?? "[null term]", this.punctuation?.toString() ?? "[null punctuation]"];
 
         if (this.truth) parts.push(this.truth.toString());
 
-        if (
-            (this.punctuation === Punctuation.JUDGMENT ||
-                this.punctuation === Punctuation.QUESTION) &&
-            !!this.stamp
-        ) {
-            parts.push(this.stamp.toString());
-        }
+        if ((this.punctuation === Punctuation.JUDGMENT || this.punctuation === Punctuation.QUESTION) && !!this.stamp) { parts.push(this.stamp.toString()); }
 
         return parts.join(" ");
     }
@@ -53,71 +35,40 @@ abstract class Sentence implements Identifiable {
     /**
      * Returns a string representation of the sentence.
      */
-    toString(): string {
-        return `${this.name()}`;
-    }
+    toString(): string { return `${this.name()}`; }
 
     // ========== GETTERS ==========
 
-    get term(): Term {
-        return this._term;
-    }
-    get punctuation(): Punctuation {
-        return this._punctuation;
-    }
-    get truth(): Truth | null {
-        return this._truth;
-    }
-    get stamp(): Stamp {
-        return this._stamp;
-    }
+    get term(): Term { return this._term; }
+    
+    get punctuation(): Punctuation { return this._punctuation; }
+
+    get truth(): Truth | null { return this._truth; }
+
+    get stamp(): Stamp { return this._stamp; }
+
+    get bestSolution(): Task | null { return this._bestSolution; } 
+    set bestSolution(value: Task | null) { this._bestSolution = value; }
 
     // ========== METHODS ==========
 
     /**
      * Checks if the sentence is a question.
      */
-    public isQuestion(): boolean {
-        return this._punctuation === Punctuation.QUESTION;
-    }
+    public isQuestion(): boolean { return this._punctuation === Punctuation.QUESTION; } 
 
-    /**
-     * Checks if the sentence is a goal.
-     */
-    public isGoal(): boolean {
-        return this._punctuation === Punctuation.GOAL;
-    }
+    public isGoal(): boolean { return this._punctuation === Punctuation.GOAL; } 
 
-    /**
-     * Checks if the sentence is a judgement.
-     */
-    public isJudgement(): boolean {
-        return this._punctuation === Punctuation.JUDGMENT;
-    }
+    public isJudgement(): boolean { return this._punctuation === Punctuation.JUDGMENT; }  
 
-    /**
-     * Checks if the term contains a query variable.
-     */
-    public containQueryVariable(): boolean {
-        return this._term.name().includes("?");
-    }
+    public containQueryVariable(): boolean { return this._term.name().includes("?"); }  
 
-    /**
-     * Checks if the sentence is revisable.
-     */
     public isRevisable(): boolean {
         const statementTarget = this.term as Statement;
-        return (
-            statementTarget.copula.symbol === "-->" ||
-            statementTarget.copula.symbol === "<=>" ||
-            !this.term.hasDependantVariable()
-        );
+        return (statementTarget.copula.symbol === "-->" || statementTarget.copula.symbol === "<=>" || !this.term.hasDependantVariable());
     }
 
-    public isEternal(): boolean {
-        return this._stamp.isEternal();
-    }
-
+    public isEternal(): boolean { return this._stamp.isEternal(); }
 
     atoms(): Term[] {
         let terms: Term[] = [];
@@ -132,8 +83,6 @@ abstract class Sentence implements Identifiable {
         collectAtoms(this.term);
         return terms;
     }
-
-
 }
 
 export { Sentence };

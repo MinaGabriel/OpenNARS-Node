@@ -7,7 +7,8 @@ import {LogFunctions} from './src/core/utils/LogFunctions';
 const prompt = promptSync();
 const nars = new Reasoner(); 
 
-LogFunctions.setup(); // Initialize logging
+LogFunctions.init(); // Initialize logging
+LogFunctions.info("Application started");
 
 while (true) {
   const input = prompt('> ');

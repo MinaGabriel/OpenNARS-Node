@@ -18,7 +18,7 @@ abstract class Bag<T extends Item> {
     protected current_counter: number;
     protected show_level: number;
 
-    constructor(capacity: number = 100, forget_rate: number = 1) {
+    constructor(capacity: number = 100, forget_rate: number = 10) {
         this.capacity = capacity;
         this.forget_rate = forget_rate;
         this.name_table = new Map<string, T>();
@@ -62,6 +62,7 @@ abstract class Bag<T extends Item> {
         return this._item_table.flat();
     }
 
+ 
 
     public putIn(newItem: T): boolean {
         const newKey = newItem.key; // The key is the name of the item
