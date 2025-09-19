@@ -15,7 +15,7 @@ abstract class Link extends Item {
     protected _type?: LinkType;
     protected _index: number[] | null = null;
     protected terms: Term[] = [];
-    protected _budget: Budget;
+    _budget: Budget;
 
     constructor(
         public readonly source: Concept | Task,

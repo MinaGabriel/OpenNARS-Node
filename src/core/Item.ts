@@ -6,7 +6,7 @@ import { Budget } from './Budget';
  */
 abstract class Item {
     protected _key: string;
-    protected _budget: Budget;
+    _budget: Budget;
 
     constructor(key?: string, budget?: Budget) {
         this._key = key ?? '';
@@ -22,7 +22,7 @@ abstract class Item {
     set priority(value: number) { this._budget.priority = value; }
     set durability(value: number) { this._budget.durability = value; }
     set quality(value: number) { this._budget.quality = value; }
-
+    set budget(value: Budget) { this._budget = value; }
     merge(that: Item): void { this._budget.merge(that.budget); }
 }
 

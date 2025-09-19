@@ -17,7 +17,12 @@ abstract class Sentence implements Identifiable {
     protected readonly _stamp: Stamp;
     _bestSolution: Task | null = null;
 
-    constructor(term: Term, punctuation: Punctuation, truth: Truth | null, stamp: Stamp) { this._term = term; this._punctuation = punctuation; this._truth = truth; this._stamp = stamp; }
+    constructor(term: Term, punctuation: Punctuation, truth: Truth | null, stamp: Stamp) { 
+        this._term = term; 
+        this._punctuation = punctuation; 
+        this._truth = truth; 
+        this._stamp = stamp;
+    }
 
     /**
      * Returns a human-readable name for the sentence.

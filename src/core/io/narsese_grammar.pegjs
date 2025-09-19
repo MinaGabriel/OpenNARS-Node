@@ -4,22 +4,10 @@ npx peggy -o narsese_grammar.js narsese_grammar.pegjs
 { 
   function makeTask(sentence, budget) { 
     // Extract budget symbols with proper defaults
-    const defaults = {
-      '.': { // Judgment
-        p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY,
-        d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY,
-        q: 0.95
-      },
-      '?': { // Question
-        p: options.Parameters.DEFAULT_QUESTION_PRIORITY || 0.9,
-        d: options.Parameters.DEFAULT_QUESTION_DURABILITY || 0.9,
-        q: 1.0
-      },
-      '!': { // Goal
-        p: 0.9,
-        d: 0.9,
-        q: 1.0
-      }
+     const defaults = {
+    '.': { p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY, d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY, q: 0.95 },
+    '?': { p: options.Parameters.DEFAULT_QUESTION_PRIORITY || 0.9, d: options.Parameters.DEFAULT_QUESTION_DURABILITY || 0.9, q: 1.0 },
+    '!': { p: 0.9, d: 0.9, q: 1.0 }
     };
 
     // Get punctuation mark to determine defaults
@@ -93,9 +81,9 @@ copula = symbol:"-->"  { return new options.Copula(symbol); }
 term = variable:variable { return variable; }
      / non_variable:non_variable { return non_variable; } // (* Example: Bird - An atomic constant term *)
 
-variable = symbol:"?" _ name:word { return new options.Term(name, options.TermType.ATOM, symbol);  } // (* query variable in question *)
-         / symbol:"#" _ name:word { return new options.Term(name, options.TermType.ATOM, symbol);  } // (* dependent variable *)
-         / symbol:"$" _ name:word { return new options.Term(name, options.TermType.ATOM, symbol);  } // (* independent variable in question *)
+variable = symbol:"?" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol);  } // (* query variable in question *)
+         / symbol:"#" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol);  } // (* dependent variable *)
+         / symbol:"$" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol);  } // (* independent variable in question *)
 
 non_variable = name:word { return new options.Term(name, options.TermType.ATOM); }
              / compound // term

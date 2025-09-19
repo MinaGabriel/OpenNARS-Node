@@ -56,14 +56,12 @@ class Concept extends Item implements Identifiable {
     get beliefs(): Task[] { return this._beliefs; }
     get term(): Term { return this._term; }
 
-    public directProcess(task: Task): void { 
-        if (task.sentence.isJudgement()) this.processJudgment(task);  
-        
-        this.buildTaskLink(task); 
+    public addQuestion(task: Task): void {
+        if (this._questions.length >= Parameters.CONCEPT_GOALS_MAX) {
+            this._questions.shift(); // remove the oldest question
+        }
+        this._questions.push(task);
     }
-
-    private buildTaskLink(task: Task): void { const task_budget = task.budget; }
-
 
 
     private calcTaskAchievement(t1: Truth | null, t2: Truth | null): number {
@@ -86,49 +84,78 @@ class Concept extends Item implements Identifiable {
                 const believedRevisedTask: Task = this.localRevision(newTask, belief);
                 newTask.achievement = this.calcTaskAchievement(newTask.sentence.truth, belief.sentence.truth);
             }
+
         }
 
         if (newTask.budget.summary() > Parameters.BUDGET_THRESHOLD) {
             this.addBelief(newTask); //try to solve a question
+            //Now Answer questions about this task
+            const answers: Task[] = this.solveJudgement(newTask);
 
         }
     }
 
-    public solveJudgement(belief: Task): void {
+    public processYesNoQuestion(task: Task): void {
+        this.addQuestion(task);
+        const belief: Task | null = this.selectCandidate(task, this._beliefs);
+        if (belief) {
+            const answer: Sentence | null = this.trySolution(belief, task);
+            if (answer) {
+                LogFunctions.console.info(`Concept.processQuestion: Solved question: ${task} with answer: ${answer}`);
+            }
+        }
+
+
+    }
+
+    public processWhQuestion(task: Task): void {
+        this.addQuestion(task);
+        LogFunctions.console.info(`Concept.processWhQuestion: Added Wh- question: ${task} to concept: ${this}`);
+    }
+
+    public solveJudgement(belief: Task): Task[] {
         const answers: Task[] = []
         //Solving Yes/No questions <bird --> fly>?
         _.forEach(this._questions, (questionTask, index) => {
-            this.trySolution(belief, questionTask); //concept questions are tasks
-          
-
+            const answer: Sentence | null = this.trySolution(belief, questionTask); //concept questions are tasks
+            answer ?? answers.push(questionTask);            LogFunctions.console.info(`Concept.solveJudgement: Solved question: ${questionTask} with answer: ${answer}`);
 
         })
-
         //Solving Wh- questions <bird --> ?x>?
+
+
+        return answers;
     }
 
 
-    private trySolution(belief: Task, task: Task): void {
+    private trySolution(belief: Task, task: Task): Sentence | null {
         const question = task.sentence as Question;
         const answer = belief.sentence;
-        let oldBest = task.bestSolution;
-        
-        if (!oldBest) { oldBest = answer; return; }
-        
-        const qualityOld = RuleFunctions.solutionQuality(task, oldBest, question.term.hasQueryVariable());
+
+        if (!task.bestSolution) { task.bestSolution = answer; return answer; }
+
+        const qualityOld = RuleFunctions.solutionQuality(task, task.bestSolution, question.term.hasQueryVariable());
         const qualityNew = RuleFunctions.solutionQuality(task, answer, question.term.hasQueryVariable());
 
-        if (qualityNew > qualityOld){
+        if (qualityNew > qualityOld) {
             task.bestSolution = answer;
-            
+
             //NAL2:if the task is a question, and the belief provides an answer that is better than the current best, then the priority of the belief is increased (as a reward), while the priority of the task is decreased (since the prob-lem has been partially solved).
+            // increase the priority of the belief that provided a better answer by giving it a stronger budget
             //reward the belief: 
-            belief.budget.priority = MathFunctions.or(task.budget.priority, qualityNew);
-            belief.budget.durability = task.budget.durability; 
+            const strongerBudget = new Budget(
+                undefined, // make a new budget
+                MathFunctions.or(task.budget.priority, qualityNew), // boosted priority
+                task.budget.durability,                             // inherit durability from task
+                TruthFunctions.truthToQuality(answer.truth!)         // recompute quality from truth
+            );
+            belief.budget = strongerBudget;
             //de-prioritize the question task (the better the answer the less priority the question has)
             //p_new = min(1.0 - qualityNew, p_old)
             task.budget.priority = Math.min(1.0 - qualityNew, task.budget.priority);
+            return answer;
         }
+        return null;
     }
 
     public localRevision(task: Task, belief: Task): Task {

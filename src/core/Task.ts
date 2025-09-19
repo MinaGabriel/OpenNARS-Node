@@ -16,7 +16,7 @@ export class Task extends Item implements Identifiable {
   private _bestSolution: Sentence | null = null;
   private _achievement: number | null = null;
 
-  protected _budget: Budget;
+   _budget: Budget;
 
   taskType: TaskType = TaskType.INPUT;
 

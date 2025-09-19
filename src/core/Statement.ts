@@ -10,6 +10,10 @@ class Statement extends Term {
     subject: Term;
     copula: Copula;
     predicate: Term;
+    //if any term has a query variable then the statement has a query variable
+    hasVariable(): boolean {
+        return this.subject.hasVariable() || this.predicate.hasVariable();
+    }
  
 
     constructor(subject: Term, copula: Copula, predicate: Term, type: TermType) {

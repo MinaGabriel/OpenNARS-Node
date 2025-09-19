@@ -279,9 +279,9 @@ function peg$parse(input, options) {
   function peg$f26(symbol) {    return new options.Copula(symbol);  }
   function peg$f27(variable) {    return variable;  }
   function peg$f28(non_variable) {    return non_variable;  }
-  function peg$f29(symbol, name) {    return new options.Term(name, options.TermType.ATOM, symbol);  }
-  function peg$f30(symbol, name) {    return new options.Term(name, options.TermType.ATOM, symbol);  }
-  function peg$f31(symbol, name) {    return new options.Term(name, options.TermType.ATOM, symbol);  }
+  function peg$f29(symbol, name) {    return new options.Term(symbol + name, options.TermType.ATOM, symbol);  }
+  function peg$f30(symbol, name) {    return new options.Term(symbol + name, options.TermType.ATOM, symbol);  }
+  function peg$f31(symbol, name) {    return new options.Term(symbol + name, options.TermType.ATOM, symbol);  }
   function peg$f32(name) {    return new options.Term(name, options.TermType.ATOM);  }
   function peg$f33(chars) {    return chars.join("").trim();  }
   function peg$f34(first, rest) {
@@ -2510,7 +2510,7 @@ function peg$parse(input, options) {
       '.': { // Judgment
         p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY,
         d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY,
-        q: 0.33
+        q: 0.95
       },
       '?': { // Question
         p: options.Parameters.DEFAULT_QUESTION_PRIORITY || 0.9,
