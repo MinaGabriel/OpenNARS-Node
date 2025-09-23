@@ -1,36 +1,52 @@
-import { Reasoner } from './src/core/Reasoner';
-import promptSync from 'prompt-sync'; 
-import { MemoryStore } from './src/core/storage/MemoryStore';
-import { ConceptBag } from './src/core/storage/ConceptBag';
-import {PrintFunctions} from './src/core/utils/PrintFunctions';
-import {LogFunctions} from './src/core/utils/LogFunctions';
-const prompt = promptSync();
-const nars = new Reasoner(); 
+import readline from "readline";
+
+import { Reasoner } from "./src/core/Reasoner";
+import { MemoryStore } from "./src/core/storage/MemoryStore";
+import { ConceptBag } from "./src/core/storage/ConceptBag";
+import { PrintFunctions } from "./src/core/utils/PrintFunctions";
+import { LogFunctions } from "./src/core/utils/LogFunctions";
+
+const nars = new Reasoner();
 
 LogFunctions.init(); // Initialize logging
 LogFunctions.info("Application started");
 
-while (true) {
-  const input = prompt('> ');
+// -------------------------
+// Interactive console with history (↑ / ↓)
+// -------------------------
+const consoleInterface = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  prompt: "> ",
+  historySize: 1000, // keep last 1000 commands in memory
+});
 
+consoleInterface.prompt();
+
+consoleInterface.on("line", (input) => {
   switch (input.trim().toLowerCase()) {
-    case 'exit':
+    case "exit":
       process.exit(0);
-    case 'time':
+
+    case "time":
       PrintFunctions.printTimeInfo();
-      continue;
-    case 'concepts':
+      break;
+
+    case "concepts":
       PrintFunctions.conceptBagTableView();
-      continue;
-    case 'tasks':
+      break;
+
+    case "tasks":
       PrintFunctions.globalTaskBagTableView();
-      continue;
-    default:
+      break;
+
+    default: {
       const [success, task, overflow] = nars.inputNarsese(input);
       const concepts: ConceptBag = MemoryStore.getState().memory.conceptsBag;
-
-      
-
-      continue;
+      // Do whatever else you want with task/overflow/concepts
+      break;
+    }
   }
-}
+
+  consoleInterface.prompt();
+});

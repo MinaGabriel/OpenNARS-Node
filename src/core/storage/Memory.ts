@@ -1,5 +1,3 @@
-
-import { Bag } from "./Bag";
 import { Concept } from "../Concept";
 import { Task } from "../Task";
 import { ConceptBag } from "./ConceptBag";
@@ -9,31 +7,25 @@ import { Sentence } from "../Sentence";
 import { Parameters } from "../Parameters";
 import { NovelTaskBag } from "./NovelTaskBag";
 import { TaskLink } from "../TaskLink";
-import { LinkType } from "../enums/Enums";
-import { TermLink } from "../TermLink";
-import _, { fromPairs } from "lodash";
-import { table } from "table";
+import _ from "lodash";
 import { TaskLinkBag } from "./TaskLinkBag";
-import colors from "ansi-colors";
 import { TermLinkBag } from "./TermLinkBag";
 import { GlobalTaskBag } from "./GlobalTaskBag";
-import { Logger } from "winston";
-import cloneDeep from 'clone-deep';
-import { BudgetFunctions } from "../inference/BudgetFunctions";
 import { MathFunctions } from "../utils/MathFunctions";
-import { log } from "console";
-import { Connector } from "../Connector";
 import { LogFunctions } from "../utils/LogFunctions";
+import { Question } from "../Question";
+import { RuleFunctions } from "../inference/RuleFunctions";
+import { TruthFunctions } from "../inference/TruthFunctions";
+import { PrintFunctions } from "../utils/PrintFunctions";
+import { TermLink } from "../TermLink";
 
-
-interface InputAccepted {
-    taskRevised: Task | null,
-
-
-}
-
+/**
+ * Memory manages concepts, tasks, and inference cycle.
+ * - Input new tasks (judgments/questions).
+ * - Handle Yes/No and Wh-questions.
+ * - Try to find solutions by unifying tasks with beliefs.
+ */
 export class Memory {
-    private data: string[][] = [];
     private _conceptsBag: ConceptBag = new ConceptBag();
     private _taskLinksBag: TaskLinkBag = new TaskLinkBag();
     private _termLinksBag: TermLinkBag = new TermLinkBag();
@@ -41,73 +33,122 @@ export class Memory {
     private _novelTasksBag: NovelTaskBag = new NovelTaskBag();
     public task!: Task;
     public currentWorkingConcept: Concept | null = null;
-    private currentTime: number = 0; // Track cycles
+    private currentTime = 0; // cycles
 
+    get conceptsBag(): ConceptBag { return this._conceptsBag; }
+    get globalTasksBag(): GlobalTaskBag { return this._globalTasksBag; }
 
-    constructor() { }
-
-    get conceptsBag(): ConceptBag {
-        return this._conceptsBag;
-    }
-    get globalTasksBag(): GlobalTaskBag {
-        return this._globalTasksBag;
-    }
- 
-
-    //This is what the input function is expected to return (one or more of these)
-
-    public input(task: Task) {
-
-        //There is a difference between Conceptualize and Task Budget
-        const ConceptualizeBudget = new Budget(undefined, task.budget.priority,
-            task.budget.durability,
-            task.term.simplicity //TOOBAD: Review
-        )
-
+    /** Insert a new task into memory, conceptualize and process. */
+    /** Insert a new task into memory, conceptualize and process. */
+    public input(task: Task): { answers: Sentence[] } {
+        const ConceptualizeBudget = new Budget(undefined, task.budget.priority, task.budget.durability, task.term.simplicity);
         const concept = this.pickOrGenerateConcept(task.term, ConceptualizeBudget);
 
-        if (task.sentence.isJudgement()) {
-            concept.processJudgment(task);
-        }
-        if (task.sentence.isQuestion()) {
-            //Dig into the atoms to see if there is a query variable
-            const hasQueryVariable = _.some(task.sentence.atoms(), (atom) => { 
-                return atom.hasQueryVariable();
-            }); 
-            hasQueryVariable ? concept.processWhQuestion(task) : concept.processYesNoQuestion(task);
-        }
+        let answers: Sentence[] = [];
 
-        //Create TermLinks and TaskLinks
-        this.createTaskLink(task);
-        
+        if (task.sentence.isJudgement()) { concept.processJudgment(task); }
+        if (task.sentence.isQuestion()) { 
+            const hasQueryVariable = _.some(task.sentence.atoms(), atom => atom.hasQueryVariable());
+            answers = hasQueryVariable ? this.processWhQuestion(task, concept) : this.processYesNoQuestion(task, concept);
+        } 
 
+        this.createTaskLinks(task);
+        this.createTermLinks(task);
+
+        return { answers };
     }
 
-    private createTaskLink(task: Task){
-        _.forEach(task.term.subTerms().toArray(), (subTerm) => {
+    /** Process a Yes/No question (like `<bird --> fly>?`). */
+    public processYesNoQuestion(query: Task, concept: Concept): Sentence[] {
+        const answers: Sentence[] = [];
+        concept.addQuestion(query);
+        const belief: Task | null = concept.selectCandidate(query, concept.beliefs);
+        if (belief) {
+            const answer: Sentence | null = this.trySolution(query, belief);
+            if (answer) answers.push(answer);
+        }
+        PrintFunctions.printAnswers(answers);
+        return answers;
+    }
+
+    /** Process a Wh-question (like `<bird --> ?x>?`). */
+    public processWhQuestion(query: Task, concept: Concept): Sentence[] {
+        const answers: Sentence[] = [];
+        concept.addQuestion(query);
+
+        _.forEachRight(query.term.subTerms().toArray(), subTerm => {
+            if (subTerm.hasQueryVariable()) return;
+            const subTermConcept = this._conceptsBag.get(subTerm.name()); if (!subTermConcept) return;
+
+            _.forEach(subTermConcept.taskLinks.toArray(), taskLink => {
+                const taskLinkConcept = this._conceptsBag.get(taskLink.task.term.name()); if (!taskLinkConcept) return;
+                const result = query.term.unifyWith(taskLinkConcept.term);
+                if (result === null || result.substitutionMap.size === 0) return;
+
+                _.forEach(taskLinkConcept.beliefs, belief => {
+                    const answer = this.trySolution(query, belief);
+                    if (answer) answers.push(answer);
+                });
+            });
+        });
+        PrintFunctions.printAnswers(answers);
+        return answers;
+    }
+
+    /** Try to solve a question with a belief, reward if better. */
+    public trySolution(query: Task, belief: Task): Sentence | null {
+        const question = query.sentence as Question, answer = belief.sentence;
+        if (!query.bestSolution) { query.bestSolution = answer; return answer; }
+        const qualityOld = RuleFunctions.solutionQuality(query, query.bestSolution, question.term.hasQueryVariable());
+        const qualityNew = RuleFunctions.solutionQuality(query, answer, question.term.hasQueryVariable());
+        if (qualityNew > qualityOld) {
+            query.bestSolution = answer;
+            belief.budget = new Budget(undefined, MathFunctions.or(query.budget.priority, qualityNew), query.budget.durability, TruthFunctions.truthToQuality(answer.truth!));
+            query.budget.priority = Math.min(1.0 - qualityNew, query.budget.priority); // lower priority once solved
+            return answer;
+        }
+        return null;
+    }
+
+    /** Create task links for subterms of the input task. */
+    private createTaskLinks(task: Task) {
+        _.forEach(task.term.subTerms().toArray(), subTerm => {
             const concept = this.pickOrGenerateConcept(subTerm, task.budget, "createTaskLink");
             const taskLink = new TaskLink(concept, task, task.budget);
-            this._taskLinksBag.putBack(taskLink);
+            this._taskLinksBag.putIn(taskLink);
             concept.taskLinks.putBack(taskLink);
         });
     }
-         
+
+    private createTermLinks(task: Task) {
+        const relationships: [Term, Term][] = Term.getAncestorPairs(task.term);
+        const swappedRelationships: [Term, Term][] = _.map(relationships, ([a, b]) => [b, a]);
+        _.forEach(swappedRelationships, ([source, target]) => {
+            const conceptSource = this.pickOrGenerateConcept(source, task.budget);
+            const conceptTarget = this.pickOrGenerateConcept(target, task.budget);
+
+            // target -> source
+            let termLink = new TermLink(conceptTarget, conceptSource, task.budget);
+            this._termLinksBag.putIn(termLink);
+            conceptTarget.termLinks.putBack(termLink);
+
+            // source -> target
+            termLink = new TermLink(conceptSource, conceptTarget, task.budget);
+            this._termLinksBag.putIn(termLink);
+            conceptSource.termLinks.putBack(termLink);
+        });
 
 
+    }
+
+    /** Retrieve or generate a concept for a term. */
     public pickOrGenerateConcept(term: Term, taskBudget: Budget, caller?: string): Concept {
-        const name = term.name();
-        let concept = this._conceptsBag.pickOut(name);
-        if (concept) { //MERGE 
+        const name = term.name(); let concept = this._conceptsBag.pickOut(name);
+        if (concept) {
             concept.priority = MathFunctions.or(concept.priority, taskBudget.priority);
             concept.durability = MathFunctions.or(concept.durability, taskBudget.durability);
             concept.quality = Math.max(concept.quality, taskBudget.quality);
-        } else {
-            concept = new Concept(term, taskBudget);
-        }
-
-        this._conceptsBag.putBack(concept);
-        return concept;
+        } else concept = new Concept(term, taskBudget);
+        this._conceptsBag.putBack(concept); return concept;
     }
-
-
 }

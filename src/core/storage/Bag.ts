@@ -1,5 +1,5 @@
 import { Item } from "../Item";
-import { Distributor } from "../Distributor"; 
+import { Distributor } from "../Distributor";
 import { BudgetFunctions } from "../inference/BudgetFunctions";
 abstract class Bag<T extends Item> {
     protected static readonly TOTAL_LEVEL: number = 100;
@@ -18,7 +18,7 @@ abstract class Bag<T extends Item> {
     protected current_counter: number;
     protected show_level: number;
 
-    constructor(capacity: number = 100, forget_rate: number = 10) {
+    constructor(capacity: number = 1000, forget_rate: number = 10) {
         this.capacity = capacity;
         this.forget_rate = forget_rate;
         this.name_table = new Map<string, T>();
@@ -62,7 +62,7 @@ abstract class Bag<T extends Item> {
         return this._item_table.flat();
     }
 
- 
+
 
     public putIn(newItem: T): boolean {
         const newKey = newItem.key; // The key is the name of the item
@@ -82,12 +82,15 @@ abstract class Bag<T extends Item> {
             return overflowItem !== newItem;
         }
 
-        
+
         return true;
     }
 
     public putBack(oldItem: T): boolean {
+        // Apply forgetting (decay the priority of the item's budget)
         BudgetFunctions.forget(oldItem.budget, this.forget_rate, Bag.RELATIVE_THRESHOLD);
+
+        // Reinsert the item into the bag with its updated (lower) priority
         return this.putIn(oldItem);
     }
 
@@ -98,7 +101,7 @@ abstract class Bag<T extends Item> {
 | You take **only 1 item**           | You take **all items (one per call)** until level is empty |
 | Counter is set to `1`              | Counter is set to the full length of that level            |
 */
-
+    //IMPORTANT: 
     public takeOut(): T | null {
         if (this.name_table.size === 0) return null;
 

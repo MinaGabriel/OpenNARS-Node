@@ -4,13 +4,13 @@ import { Concept } from "../Concept";
 import { Sentence } from "../Sentence";
 import { Truth } from "../Truth";
 import { table } from "table"; //  npm install table
-import _ from 'lodash'; 
+import _ from 'lodash';
 import { MathFunctions } from "../utils/MathFunctions";
-import cloneDeep from "clone-deep"; 
+import cloneDeep from "clone-deep";
 import { TruthFunctions } from "./TruthFunctions";
 import { Parameters } from "../Parameters";
 
-export class BudgetFunctions { 
+export class BudgetFunctions {
     /**
      * Rank a belief based on either expectation or confidence.
      * Handles null truth values safely.
@@ -27,26 +27,42 @@ export class BudgetFunctions {
     }
 
     static distributeAmongLinks(budget: Budget, numberOfLinks: number): Budget {
-        
+
         const priority = budget.priority / Math.sqrt(numberOfLinks);
         const durability = budget.durability > 1.0 ? budget.durability - Parameters.TRUTH_EPSILON : budget.durability;
-        const quality = budget.quality > 1.0 ? 1.0 : budget.quality;  
+        const quality = budget.quality > 1.0 ? 1.0 : budget.quality;
         return new Budget(undefined, priority, durability, quality);
     }
 
-    static forget(budget: Budget, forget_rate: number, RELATIVE_THRESHOLD: number): void {
+    static forget(budget: Budget, forgetRate: number, RELATIVE_THRESHOLD: number): void {
         /**
-         *  Ref: The Conceptual Design of OpenNARS 3.1.0
-        Ref: OpenNARS 3.1.0 BudgetFunctions.java line 176~196
-        Decrease Priority after an item is used, called in Bag. After a constant time, p should become d*p. Since in this period, the item is accessed c*p times, each time p-q should multiple d^(1/(c*p)). The intuitive meaning of the parameter "forgetRate" is: after this number of times of access, priority 1 will become d, it is a system parameter
-        adjustable in run time.
+         * Ref: The Conceptual Design of OpenNARS 3.1.0
+         * Ref: OpenNARS 3.1.0 BudgetFunctions.java line 176~196
+         *
+         * Decrease Priority after an item is used, called in Bag.
+         * After a constant time, p should become d * p.
+         * Since in this period, the item is accessed c * p times,
+         * each time (p - q) should be multiplied by d^(1 / (c * p)).
+         *
+         * forgetRate = Config.cycles_forget
+         * Q = Config.quality_min
          */
-        let quality = budget.quality * 0.3; //TOOBAD: I had to hard code this in to make it work
-        const priority = budget.priority - quality;
-        if (priority > 0) {
-            quality += priority * Math.pow(budget.durability, 1.0 / (forget_rate * priority));
+
+        const Q = 0.3; // quality_min, should be parameterized
+        const C = forgetRate; // cycles_forget
+
+        const p = budget.priority;
+        const q = budget.quality * Q;
+        const d = budget.durability;
+
+        // Guard: if (p - q) is too small, skip update
+        const diff = p - q;
+        if (Math.abs(diff) < RELATIVE_THRESHOLD) {
+            return;
         }
-        budget.priority = quality;
+
+        // Decay formula
+        budget.priority = q + diff * Math.pow(d, 1.0 / (C * Math.abs(diff)));
     }
 
     static activate(concept: Concept, budget: Budget): void {

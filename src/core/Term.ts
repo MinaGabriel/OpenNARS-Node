@@ -4,6 +4,7 @@ import { TermType } from './enums/Enums';
 import { Symbols } from './enums/Symbols';
 import { TemporalTypes } from './enums/Enums';
 import { Identifiable } from './interface/Identifiable';
+import { Statement } from './Statement';
 export class Term implements Identifiable {
     private readonly _key: string = nanoid(8);
     private _complexity: number = 1;
@@ -31,17 +32,17 @@ export class Term implements Identifiable {
     }
 
     /** ========== READ-ONLY GETTERS ========== */
-    
+
     get type(): TermType { return this._type; }
     get key(): string { return this._key; }
     get complexity(): number { return this._complexity; }
     get terms(): Set<Term> { return new Set(this._terms); }
     get components(): Set<Term> { return new Set(this._components); }
     get temporalOrder(): TemporalTypes { return TemporalTypes.ORDER_NONE; }
-    get simplicity(): number{ return Math.pow(this.complexity , -1.0)}   //TOOBAD: Need to know when is this 0.5 and 1.0 Issue 1
+    get simplicity(): number { return Math.pow(this.complexity, -1.0) }   //TOOBAD: Need to know when is this 0.5 and 1.0 Issue 1
 
     name(): string { return this._name; }
-    toString(): string { return this._name;}
+    toString(): string { return this._name; }
 
     isAtom(): boolean { return this._type === TermType.ATOM; }
     isCompound(): boolean { return this._type === TermType.COMPOUND; }
@@ -59,8 +60,8 @@ export class Term implements Identifiable {
     }
 
     /** ========== METHODS ========== */
-    
-    
+
+
 
     public subTerms(): ImmutableOrderedSet<Term> {
         return new ImmutableOrderedSet([this], Array.from(this._components));
@@ -89,6 +90,86 @@ export class Term implements Identifiable {
         cloned._terms = new Set([...this._terms].map(term => term.clone()));
         return cloned;
     }
+
+    /**
+     * isStructurallyCompatible
+     * 
+     * Checks whether this term and another term can be considered compatible
+     * under variable/constant matching rules.
+     * 
+     * Examples:
+     *   <bird --> ?x> vs <bird --> fly> → true   (variable matches constant)
+     *   <$0 --> A> vs <$1 --> A>         → true   (same variable type)
+     *   <dog --> run> vs <cat --> run>   → false  (constants differ)
+     *   <$0 --> A> vs <?x --> A>         → false  (different variable types)
+     */
+    public isStructurallyCompatible(that: Term): boolean {
+        if (that.isAtom()) {
+            if (this.hasVariable() !== that.hasVariable()) return true; // var vs const
+            if (this.hasVariable() && that.hasVariable()) {
+                return (
+                    (this.hasIndependentVariable() && that.hasIndependentVariable()) ||
+                    (this.hasDependantVariable() && that.hasDependantVariable()) ||
+                    (this.hasQueryVariable() && that.hasQueryVariable())
+                );
+            }
+            return this.identical(that); // both constants
+        }
+        if ((that.isCompound() || that.isStatement()) && this.hasVariable()) return true;
+        return false;
+    }
+
+    /**
+     * unifyWith
+     *
+     * Attempts to unify this term with another term under NAL-style 
+     * structural compatibility and variable-binding rules.
+     *
+     * Rules:
+     * - A query variable (?x) can bind to an atomic, compound, or statement term.  
+     * - If the same variable appears multiple times, it must bind consistently.  
+     * - Two variables are only compatible if they are of the same type 
+     *   (independent, dependent, query).  
+     * - Two atomic terms are compatible only if they are identical.  
+     *
+     * Returns:
+     * - `{ substitutionMap }` if unification succeeds.
+     * - `null` if unification fails.
+     *
+     * Examples:
+     *   <bird --> ?x> unifyWith <bird --> fly>          
+     *     → { "?x": fly }
+     *
+     *   <<?x --> A> --> <?x --> B>> unifyWith <<C --> A> --> <C --> B>>  
+     *     → { "?x": C }
+     *
+     *   <dog --> run> unifyWith <dog --> run>           
+     *     → { }   (no variables, identical atoms)
+     *
+     *   <dog --> run> unifyWith <cat --> run>           
+     *     → null  (constant mismatch)
+     */
+    public unifyWith(that: Term): { substitutionMap: Map<string, Term> } | null {
+        const unify = (self: Term, other: Term, m: Map<string, Term>): boolean => {
+            if (self.hasQueryVariable()) { //TOOBAD: Need to make this more general
+                if (m.has(self.name())) return m.get(self.name())?.name() === other.name();
+                m.set(self.name(), other);
+                return true;
+            }
+            if (self.isStatement() && other.isStatement()) {
+                const s = self as Statement;
+                const o = other as Statement;
+                if (s.copula.symbol !== o.copula.symbol) return false;
+                return unify(s.subject, o.subject, m) && unify(s.predicate, o.predicate, m);
+            }
+            return self.name() === other.name();
+        };
+
+        const map = new Map<string, Term>();
+        return unify(this, that, map) ? { substitutionMap: map } : null;
+    }
+
+
 
 
     public static getAncestorPairs(node: Term, ancestors: Term[] = [], pairs: [Term, Term][] = []): [Term, Term][] {

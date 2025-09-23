@@ -1,7 +1,7 @@
 import { MemoryStore } from '../storage/MemoryStore';
 import { NarseseParser } from '../NarseseParser';
-import { Parameters } from '../Parameters';
 import { Task } from '../Task';
+import { LogFunctions } from '../utils/LogFunctions';
 
 /**
  * NarseseChannel class for handling Narsese input
@@ -37,7 +37,7 @@ class NarseseChannel {
 
             return [true, task, null];
         } catch (error) {
-            console.error('Error parsing Narsese input:', error);
+            LogFunctions.both.error(`Error parsing Narsese input: ${text} ` );
             return [false, null, null];
         }
     }

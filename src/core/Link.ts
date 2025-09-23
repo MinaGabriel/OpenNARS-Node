@@ -15,7 +15,6 @@ abstract class Link extends Item {
     protected _type?: LinkType;
     protected _index: number[] | null = null;
     protected terms: Term[] = [];
-    _budget: Budget;
 
     constructor(
         public readonly source: Concept | Task,
@@ -25,7 +24,6 @@ abstract class Link extends Item {
         protected readonly enableTransform: boolean = false
     ) {
         super(nanoid(8), budget);
-        this._budget = budget;
         this.setType(this.enableTransform);
     }
 

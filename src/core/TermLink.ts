@@ -8,12 +8,12 @@ import { LinkType } from "./enums/Enums";
 
 
 class TermLink extends Link {
-    constructor(source: Concept , target: Concept , budget: Budget) {
+    constructor(source: Concept, target: Concept, budget: Budget) {
         super(source, target, budget, true, false);
     }
 
     toString(): string {
-        return `Term Link: ${colors.red(this.target.toString())} ${LinkType[this.type as number] ?? ""}`;
+        return `Term Link: ${colors.magenta(this.budget.toString())}  ${colors.magenta(this.source.name() + " --- " + this.target.name())} ${colors.yellow(_.isArray(this.index) && this.index.length > 0 ? JSON.stringify(this.index) : "")} ${LinkType[this.type as number] ?? ""}`;
     }
 
 }

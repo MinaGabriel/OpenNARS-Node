@@ -1,24 +1,20 @@
 /*
-npx peggy -o narsese_grammar.js narsese_grammar.pegjs 
+cd ./src/core/io && npx peggy -o narsese_grammar.js narsese_grammar.pegjs && cd ../../../
 */
-{ 
-  function makeTask(sentence, budget) { 
-    // Extract budget symbols with proper defaults
-     const defaults = {
-    '.': { p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY, d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY, q: 0.95 },
-    '?': { p: options.Parameters.DEFAULT_QUESTION_PRIORITY || 0.9, d: options.Parameters.DEFAULT_QUESTION_DURABILITY || 0.9, q: 1.0 },
-    '!': { p: 0.9, d: 0.9, q: 1.0 }
-    };
 
-    // Get punctuation mark to determine defaults
+{
+  function makeTask(sentence, budget) { 
+    const defaults = {
+      '.': { p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY, d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY, q: 0.95 },
+      '?': { p: options.Parameters.DEFAULT_QUESTION_PRIORITY || 0.9, d: options.Parameters.DEFAULT_QUESTION_DURABILITY || 0.9, q: 1.0 },
+      '!': { p: 0.9, d: 0.9, q: 1.0 }
+    };
     const punctuation = sentence.punctuation;
     const def = defaults[punctuation] || defaults['.'];
-
-    // Use provided budget symbols or defaults
     const [priority, durability, quality] = budget || [];
     const p = priority ?? def.p;
     const d = durability ?? def.d;
-    const q = quality ?? (sentence.truth ? options.TruthFunctions.truthToQuality(sentence.truth) :  def.q); 
+    const q = quality ?? (sentence.truth ? options.TruthFunctions.truthToQuality(sentence.truth) : def.q); 
     return new options.Task(
       sentence, 
       new options.Budget(null, p, d, q)
@@ -35,13 +31,14 @@ start = _ task:task _ EOF { return task; }
 task = budget:budget? _ sentence:sentence { return makeTask(sentence, budget); }
 
 sentence
-  = judgment
+  = judgement
   / question
   / goal 
 
-judgment = term:(statement / compound) _ "." _ tense:tense? _ truth:truth? { return new options.Judgement(term, ".", truth, tense); }
-question = term:(statement / compound) _ "?" _ tense:tense? { return new options.Question(term, tense); } //TODO
-goal     = term:(statement / compound) _ "!" _ tense:tense? _ desire:desire? { return new options.Goal(); }  //TODO 
+judgement = term:(statement / compound_term) _ "." _ tense:tense? _ truth:truth? { return new options.Judgement(term, ".", truth, tense); }
+question  = term:(statement / compound_term) _ "?" _ tense:tense? { return new options.Question(term, tense); }
+goal      = term:(statement / compound_term) _ "!" _ tense:tense? _ desire:desire? { return new options.Goal(); } 
+
 statement
   = "<" _ subject:term _ copula:copula _ predicate:term _ ">" { return new options.Statement(subject, copula, predicate, options.TermType.STATEMENT); }
   / "(" _ subject:term _ copula:copula _ predicate:term _ ")" { return new options.Statement(subject, copula, predicate); }
@@ -49,9 +46,9 @@ statement
 budget = "$" priority:priority _ ";" _ durability:durability _ ";" _ quality:quality "$" { return [priority, durability, quality]; }
 
 tense = ":/:" { return options.Tense.FUTURE; }
-      / ":|:" { return options.Tense.Present; }
-      / ":\\:" { return options.Tense.Past; }
-      / ":-:" { return options.Tense.Eternal; }
+      / ":|:" { return options.Tense.PRESENT; }
+      / ":\\:" { return options.Tense.PAST; }
+      / ":-:"  { return options.Tense.ETERNAL; }
 
 truth = "%" frequency:frequency ";"? confidence_and_k_evidence:confidence_k_evidence_group? "%" {
   return new options.Truth(
@@ -79,41 +76,32 @@ copula = symbol:"-->"  { return new options.Copula(symbol); }
        / symbol:"<|>"  { return new options.Copula(symbol); }
 
 term = variable:variable { return variable; }
-     / non_variable:non_variable { return non_variable; } // (* Example: Bird - An atomic constant term *)
+     / non_variable:non_variable { return non_variable; }
 
-variable = symbol:"?" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol);  } // (* query variable in question *)
-         / symbol:"#" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol);  } // (* dependent variable *)
-         / symbol:"$" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol);  } // (* independent variable in question *)
+variable = symbol:"?" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol); }
+         / symbol:"#" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol); }
+         / symbol:"$" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol); }
 
 non_variable = name:word { return new options.Term(name, options.TermType.ATOM); }
-             / compound // term
+             / compound_term
              / statement 
  
 word = chars:[a-zA-Z_]+ { return chars.join("").trim(); }
 
 /*********************
  * Compound Terms
- * A compound term, e.g., "(&&, A, B)", "{A, B}", or "(--, A)". 
+ * Examples: 
+ *   Negation: (--, Bird)
  *********************/
 
-compound = set 
+compound_term
+  =   negation
 
-set = extensional_image
-    / intensional_image
+/* Negation */
+negation =  "(" _ "--" _ "," _ inner:term _ ")" { return new options.Compound(new options.Connector(options.ConnectorType.NEGATION), [inner]); } 
 
-extensional_image = "(" _ "/" "," _ first:term rest:("," _ term)* _ ")" {
-  // `rest` is always an array (possibly empty)
-  const terms = [first, ...rest.map(item => item[2])];
-  return new options.Compound(new options.Connector(options.ConnectorType.EXTENSIONAL_IMAGE), terms);
-}
-
-intensional_image = "(" _ "\\" "," _ first:term rest:("," _ term)* _ ")" {
-  const terms = [first, ...rest.map(item => item[2])];
-  return new options.Compound(new options.Connector(options.ConnectorType.INTENSIONAL_IMAGE), terms);
-}
-  
 /*********************
- * Numeric Values
+ * Numbers
  *********************/
 
 number      = n:[0-9]+ ("." d:[0-9]+)? { return parseFloat(text()); }
@@ -137,5 +125,4 @@ frequency   = [0]? "." [0-9]+ { return parseFloat(text()); }
 k_evidence  = [1-9] [0-9]* { return parseInt(text(), 10); }
 
 _ "whitespace" = [ \t\n\r]* { return null; }
-
 EOF "end of input" = !.

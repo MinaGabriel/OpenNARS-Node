@@ -20,6 +20,8 @@ import stringify from 'json-stringify-pretty-compact';
 import { Parameters } from "../Parameters";
 import { TemporalTypes } from "../enums/Enums";
 import { Stamp } from "../Stamp";
+import { Statement } from "../Statement";
+import { LogFunctions } from "./LogFunctions";
 
 export class PrintFunctions {
     private static formatDuration(ms: number): string {
@@ -77,49 +79,53 @@ export class PrintFunctions {
         }));
     }
 
-    static conceptBagTableView(): void {
-        const memory = MemoryStore.getState().memory;
-        const conceptBag = memory.conceptsBag;
-        let counter = 1
-        const data: string[][] = [];
-
-        conceptBag.item_table.forEach((conceptArray, i) => {
-            conceptArray.forEach((concept, j) => {
-                const term = concept as unknown as Term;
-
-                // Task links
-                const taskLinkData = concept.taskLinks.item_table.flatMap(a =>
-                    a.map(t => `${t}`));
-                const taskLinkBudget = concept.taskLinks.item_table.flatMap(a =>
-                    a.map(t => colors.green(t.budget.toString())));
-
-                // Term links
-                const termLinkData = concept.termLinks.item_table.flatMap(a =>
-                    a.map(t => `${t}`));
-                const termLinkBudget = concept.termLinks.item_table.flatMap(a =>
-                    a.map(t => colors.red(t.budget.toString())));
-
-                // Beliefs
-                const beliefData = concept.beliefs.map((b: Task) =>
-                    `• ${colors.cyan(b.sentence.toString())} ${colors.gray(b.budget.toString())}`
-                );
-
-                data.push([
-                    `${counter++}`,
-                    `${colors.yellow(term.toString())}\n${colors.blue(concept.budget.toString())}`,
-                    [...taskLinkData, ...termLinkData, '', 'Beliefs:', ...beliefData].join('\n'),
-                    [...taskLinkBudget, ...termLinkBudget].join('\n')
-                ]);
-            });
-        });
-
-        if (data.length === 0) {
-            console.log(colors.yellow('Concepts table is empty.'));
+    static printAnswers(answers: Sentence | Sentence[] | null): void {
+        if (_.isNil(answers)) {
+            LogFunctions.console.info("No answers available.");
             return;
         }
 
-        console.log(table(data, {
-            header: { alignment: 'center', content: 'Concepts TABLE' }
-        }));
+        const list = _.castArray(answers); // ensures it's always an array
+
+        if (_.isEmpty(list)) {
+            LogFunctions.console.warn("Answer list is empty.");
+            return;
+        }
+
+        _.forEach(list, (answer, index) => {
+            LogFunctions.console.answer(
+                list.length > 1
+                    ? ` ${index + 1}: ${answer.toString()}`
+                    : ` ${answer.toString()}`
+            );
+        });
+    }
+
+    //TODO: USE LogFunctions
+    static conceptBagTableView(): void {
+        const memory = MemoryStore.getState().memory;
+        const conceptBag = memory.conceptsBag;
+        let counter = 1;
+
+        const data: string[][] = _(conceptBag.item_table).flatten().map((concept) => {
+            const term = concept as unknown as Term;
+            const taskLinks = _(concept.taskLinks.item_table).flatten().value();
+            const taskLinkData = _.map(taskLinks, t => `${t}`);
+            const taskLinkBudget = _.map(taskLinks, t => colors.green(t.budget.toString()));
+            const termLinks = _(concept.termLinks.item_table).flatten().value();
+            const termLinkData = _.map(termLinks, t => `${t}`);
+            const termLinkBudget = _.map(termLinks, t => colors.red(t.budget.toString()));
+            const beliefData = _.map(concept.beliefs, (b: Task) =>
+                `• ${colors.gray(b.budget.toString())} ${colors.cyan(b.sentence.toString())}`);
+            const questionData = _.map(concept.questions, (q: Task) =>
+                `• ${colors.magenta(q.sentence.toString())} ${colors.gray(q.budget.toString())}`);
+            const contentData = _.compact(
+                [...taskLinkData, ...termLinkData, '', 'Beliefs:', ...beliefData, '', 'Questions:', ...questionData]).join('\n');
+            return [`${counter++}`, `${colors.yellow(term.toString())}\n${colors.blue(concept.budget.toString())}`, contentData];
+        }).value();
+
+        if (_.isEmpty(data)) { console.log(colors.yellow('Concepts table is empty.')); return; }
+
+        console.log(table(data, { header: { alignment: 'center', content: 'Concepts TABLE' } }));
     }
 }
