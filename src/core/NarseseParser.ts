@@ -1,21 +1,21 @@
 // ───── Imports ─────
-import { Task } from './Task';
-import { Parameters } from './Parameters';
-import { Judgement } from './Judgement';
-import { Term } from './Term';
-import { Copula } from './Copula';
-import { Statement } from './Statement';
-import { Truth } from './Truth';
-import { Tense, Punctuation, TermType, ConnectorType } from './enums/Enums';
-import { Budget } from './Budget'; 
-import { BudgetFunctions } from './inference/BudgetFunctions';
-import { Connector } from './Connector';
-import { Compound } from './Compound';  
-import { TruthFunctions } from './inference/TruthFunctions';
-import { Question } from './Question';
+import { Task } from './nalCorePrimitives';
+import { Parameters } from "./Symbols";
+import { Judgement } from './nalCorePrimitives';
+import { Term } from './nalCorePrimitives';
+import { Copula } from './nalCorePrimitives';
+import { Statement } from './nalCorePrimitives';
+import { Truth } from './nalCorePrimitives';
+import { Tense, Punctuation, TermType, ConnectorType } from "./Symbols";
+import { Budget } from './nalCorePrimitives'; 
+import { BudgetFunctions } from "./RuleFunctions";
+import { Connector } from './nalCorePrimitives';
+import { Compound } from './nalCorePrimitives';  
+import { TruthFunctions } from "./RuleFunctions";
+import { Question } from './nalCorePrimitives';
 // Import the precompiled parser
 // @ts-ignore
-import narseseParser from './io/narsese_grammar.js'; //  Use --> npm run build:grammar
+import narseseParser from './narsese_grammar.js'; //  Use --> npm run build:grammar
 
 /**
  * Parser class for Narsese language.

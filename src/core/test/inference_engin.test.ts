@@ -7,7 +7,7 @@ import {
   inferSingleShotOnCurrentFacts,
   formatTerm
 } from "../NALInferenceEngine";
-import { LogFunctions } from "../utils/LogFunctions";
+import { LogFunctions } from "../LogFunctions";
 import { assertType } from "vitest";
 
 const state = createEngineState();

@@ -1,6 +1,12 @@
-import { Item } from "../Item";
-import { Distributor } from "../Distributor";
-import { BudgetFunctions } from "../inference/BudgetFunctions";
+import { Item } from "./nalCorePrimitives";
+import { Distributor } from "./Distributor";
+import { BudgetFunctions } from "./RuleFunctions";
+import { Task } from "./nalCorePrimitives";
+import { Concept } from "./Concept";
+import { Parameters } from "./Symbols";
+import { TaskLink } from "./Link";
+import { TermLink } from "./Link";
+
 abstract class Bag<T extends Item> {
     protected static readonly TOTAL_LEVEL: number = 100;
     protected static readonly THRESHOLD: number = 10;
@@ -38,7 +44,10 @@ abstract class Bag<T extends Item> {
         this.mass = 0;
         this.current_counter = 0;
     }
-    get item_table(): Array<Array<T>> { return this._item_table; }
+
+    get item_table(): Array<Array<T>> {
+        return this._item_table;
+    }
 
     public size(): number {
         return this.name_table.size;
@@ -62,12 +71,9 @@ abstract class Bag<T extends Item> {
         return this._item_table.flat();
     }
 
-
-
     public putIn(newItem: T): boolean {
         const newKey = newItem.key; // The key is the name of the item
         const oldItem = this.name_table.get(newKey);
-
 
         if (oldItem) {
             this.outOfBase(oldItem);
@@ -82,7 +88,6 @@ abstract class Bag<T extends Item> {
             return overflowItem !== newItem;
         }
 
-
         return true;
     }
 
@@ -95,13 +100,13 @@ abstract class Bag<T extends Item> {
     }
 
     /*
-| **If `current_level < THRESHOLD`** | **If `current_level ≥ THRESHOLD`**                         |
-| ---------------------------------- | ---------------------------------------------------------- |
-| It's a **low-priority** level      | It's a **normal/high-priority** level                      |
-| You take **only 1 item**           | You take **all items (one per call)** until level is empty |
-| Counter is set to `1`              | Counter is set to the full length of that level            |
-*/
-    //IMPORTANT: 
+    | **If `current_level < THRESHOLD`** | **If `current_level ≥ THRESHOLD`**                         |
+    | ---------------------------------- | ---------------------------------------------------------- |
+    | It's a **low-priority** level      | It's a **normal/high-priority** level                      |
+    | You take **only 1 item**           | You take **all items (one per call)** until level is empty |
+    | Counter is set to `1`              | Counter is set to the full length of that level            |
+    */
+    // IMPORTANT:
     public takeOut(): T | null {
         if (this.name_table.size === 0) return null;
 
@@ -111,7 +116,6 @@ abstract class Bag<T extends Item> {
             while (this.emptyLevel(this.current_level)) {
                 this.current_level = Bag.DISTRIBUTOR.pick(this.level_index);
                 this.level_index = Bag.DISTRIBUTOR.next(this.level_index);
-
             }
 
             this.current_counter = this.current_level < Bag.THRESHOLD
@@ -234,3 +238,41 @@ abstract class Bag<T extends Item> {
 }
 
 export { Bag };
+
+class NovelTaskBag extends Bag<Task> {
+    constructor() {
+        super();
+    }
+}
+
+export { NovelTaskBag };
+
+export class ConceptBag extends Bag<Concept> {
+    // ConceptBag specific implementations
+    constructor() {
+        super(Parameters.CONCEPT_BAG_SIZE);
+    }
+}
+
+export class GlobalTaskBag extends Bag<Task> {
+    // ConceptBag specific implementations
+    constructor() {
+        super(Parameters.GLOBAL_BUFFER_SIZE);
+    }
+}
+
+class TaskLinkBag extends Bag<TaskLink> {
+    constructor() {
+        super();
+    }
+}
+
+export { TaskLinkBag };
+
+class TermLinkBag extends Bag<TermLink> {
+    constructor() {
+        super();
+    }
+}
+
+export { TermLinkBag };

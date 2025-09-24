@@ -1,7 +1,7 @@
-import { MemoryStore } from '../storage/MemoryStore';
-import { NarseseParser } from '../NarseseParser';
-import { Task } from '../Task';
-import { LogFunctions } from '../utils/LogFunctions';
+import { MemoryStore } from './Memory';
+import { NarseseParser } from './NarseseParser';
+import { Task } from './nalCorePrimitives';
+import { LogFunctions } from './LogFunctions';
 
 /**
  * NarseseChannel class for handling Narsese input

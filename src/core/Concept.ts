@@ -1,24 +1,20 @@
-import { Budget } from "./Budget";
-import { Item } from "./Item";
-import { Judgement } from "./Judgement";
-import { Sentence } from "./Sentence";
-import { Task } from "./Task";
-import { TaskLink } from "./TaskLink";
-import { TaskLinkBag } from "./storage/TaskLinkBag";
-import { Term } from "./Term";
-import { TermLinkBag } from "./storage/TermLinkBag";
-import { Parameters } from "./Parameters";
-import { LinkType, Punctuation } from "./enums/Enums";
 import _ from "lodash";
-import { Identifiable } from "./interface/Identifiable";
-import { LogFunctions } from "./utils/LogFunctions";
-import { RuleFunctions } from "./inference/RuleFunctions";
-import { BudgetFunctions } from "./inference/BudgetFunctions";
-import { Truth } from "./Truth";
-import { TruthFunctions } from "./inference/TruthFunctions";
-import { Premise } from "./enums/Types";
-import { StampFunctions } from "./inference/StampFunctions";
-import { Goal } from "./Goal";
+
+import { Budget } from "./nalCorePrimitives";
+import { BudgetFunctions } from "./RuleFunctions";
+import { Identifiable, LinkType, Punctuation } from "./Symbols";
+import { Item } from "./nalCorePrimitives";
+import { Judgement } from "./nalCorePrimitives";
+import { LogFunctions } from "./LogFunctions";
+import { Parameters } from "./Symbols";
+import { RuleFunctions } from "./RuleFunctions"; 
+import { StampFunctions } from "./RuleFunctions";
+import { Task } from "./nalCorePrimitives"; 
+import { TaskLinkBag, TermLinkBag } from "./Bag";
+import { Term } from "./nalCorePrimitives";
+import { Truth } from "./nalCorePrimitives";
+import { TruthFunctions } from "./RuleFunctions";
+
 
 /**
  * Concept represents a term in memory (like `<bird --> animal>`). 

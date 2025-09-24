@@ -1,10 +1,10 @@
 import readline from "readline";
 
 import { Reasoner } from "./src/core/Reasoner";
-import { MemoryStore } from "./src/core/storage/MemoryStore";
-import { ConceptBag } from "./src/core/storage/ConceptBag";
-import { PrintFunctions } from "./src/core/utils/PrintFunctions";
-import { LogFunctions } from "./src/core/utils/LogFunctions";
+import { MemoryStore } from "./src/core/Memory";
+import { ConceptBag } from "./src/core/Bag";
+import { PrintFunctions } from "./src/core/LogFunctions";
+import { LogFunctions } from "./src/core/LogFunctions";
 
 const nars = new Reasoner();
 

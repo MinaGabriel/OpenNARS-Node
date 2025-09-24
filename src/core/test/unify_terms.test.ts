@@ -1,8 +1,8 @@
 import { Reasoner } from "../Reasoner";
 import _ from "lodash";
-import { Task } from "../Task";
+import { Task } from "../nalCorePrimitives";
 import { describe, it, expect } from "vitest";
-import { Memory } from "../storage/Memory";
+import { Memory } from "../Memory";
 
 const nars = new Reasoner();
 

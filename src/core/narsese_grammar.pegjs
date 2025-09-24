@@ -1,5 +1,5 @@
 /*
-cd ./src/core/io && npx peggy -o narsese_grammar.js narsese_grammar.pegjs && cd ../../../
+cd ./src/core/ && npx peggy -o narsese_grammar.js narsese_grammar.pegjs && cd ../../
 */
 
 {

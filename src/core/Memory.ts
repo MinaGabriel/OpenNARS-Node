@@ -1,23 +1,21 @@
-import { Concept } from "../Concept";
-import { Task } from "../Task";
-import { ConceptBag } from "./ConceptBag";
-import { Budget } from "../Budget";
-import { Term } from "../Term";
-import { Sentence } from "../Sentence";
-import { Parameters } from "../Parameters";
-import { NovelTaskBag } from "./NovelTaskBag";
-import { TaskLink } from "../TaskLink";
 import _ from "lodash";
-import { TaskLinkBag } from "./TaskLinkBag";
-import { TermLinkBag } from "./TermLinkBag";
-import { GlobalTaskBag } from "./GlobalTaskBag";
-import { MathFunctions } from "../utils/MathFunctions";
-import { LogFunctions } from "../utils/LogFunctions";
-import { Question } from "../Question";
-import { RuleFunctions } from "../inference/RuleFunctions";
-import { TruthFunctions } from "../inference/TruthFunctions";
-import { PrintFunctions } from "../utils/PrintFunctions";
-import { TermLink } from "../TermLink";
+import { Concept } from "./Concept";
+import { Task } from "./nalCorePrimitives";
+import { Budget } from "./nalCorePrimitives";
+import { Term } from "./nalCorePrimitives";
+import { Sentence } from "./nalCorePrimitives";
+import { TaskLink } from "./Link";
+import { TermLink } from "./Link";
+import { Question } from "./nalCorePrimitives";
+import { ConceptBag, NovelTaskBag, TaskLinkBag, TermLinkBag, GlobalTaskBag } from "./Bag";
+import { MathFunctions } from "./RuleFunctions";
+import { PrintFunctions } from "./LogFunctions";
+import { RuleFunctions, TruthFunctions } from "./RuleFunctions";
+// src/core/MemoryStore.ts
+import { createStore } from 'zustand/vanilla';
+import { Reasoner } from './Reasoner';
+import { NarseseChannel } from './NarseseChannel';
+// This file defines the MemoryStore, which is a Zustand store for managing the memory, time, reasoner, engine, and channel in the NARS system.
 
 /**
  * Memory manages concepts, tasks, and inference cycle.
@@ -47,10 +45,10 @@ export class Memory {
         let answers: Sentence[] = [];
 
         if (task.sentence.isJudgement()) { concept.processJudgment(task); }
-        if (task.sentence.isQuestion()) { 
+        if (task.sentence.isQuestion()) {
             const hasQueryVariable = _.some(task.sentence.atoms(), atom => atom.hasQueryVariable());
             answers = hasQueryVariable ? this.processWhQuestion(task, concept) : this.processYesNoQuestion(task, concept);
-        } 
+        }
 
         this.createTaskLinks(task);
         this.createTermLinks(task);
@@ -152,3 +150,70 @@ export class Memory {
         this._conceptsBag.putBack(concept); return concept;
     }
 }
+
+export class Time {
+    private _startTime: number;
+    private _narsClock: number;
+
+    constructor() {
+        this._startTime = Date.now();
+        this._narsClock = 0;
+    }
+
+    /** Real time since boot in ms */
+    public now(): number {
+        return Date.now() - this._startTime;
+    }
+
+    /** Absolute system time in ms */
+    public nowAbsolute(): number {
+        return Date.now();
+    }
+
+    /** Logical time (number of cycles since boot) */
+    public narsClock(): number {
+        return this._narsClock;
+    }
+
+    /** Advance the logical clock by 1 */
+    public tick(): void {
+        this._narsClock++;
+    }
+
+    /** Reset everything */
+    public reset(): void {
+        this._startTime = Date.now();
+        this._narsClock = 0;
+    }
+}
+
+
+let currentStampSerial = -1; // Serial number for the current stamp, initialized to -1
+export interface MemoryStore {
+    time: Time;
+    memory: Memory;
+    reasoner: Reasoner;
+    channel: NarseseChannel;
+    getNextStampSerial: () => number; // Serial number for the current stamp
+    resetAll: () => void;
+}
+
+export const MemoryStore = createStore<MemoryStore>((set) => ({
+    time: new Time(),
+    memory: new Memory(),
+    channel: new NarseseChannel(),
+    reasoner: undefined as unknown as Reasoner, // placeholder, set after
+    getNextStampSerial: () => {
+        currentStampSerial += 1;
+        return currentStampSerial;
+    },
+
+    resetAll: () =>
+        set({
+            time: new Time(),
+            memory: new Memory(),
+            channel: new NarseseChannel(),
+            reasoner: undefined as unknown as Reasoner,
+        }),
+}));
+

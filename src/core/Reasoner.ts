@@ -2,11 +2,11 @@
 import fs from "node:fs";
 import path from "path";
 
-import { MemoryStore } from "./storage/MemoryStore";
-import { Task } from "./Task";
+import { MemoryStore } from "./Memory";
+import { Task } from "./nalCorePrimitives";
 import { Concept } from "./Concept";
-import { TaskLink } from "./TaskLink";
-import { LogFunctions } from "./utils/LogFunctions";
+import { TaskLink } from "./Link";
+import { LogFunctions } from "./LogFunctions";
 import {
   createEngineState,
   loadYamlRules,
@@ -15,14 +15,12 @@ import {
   formatTerm,
   EngineState
 } from "./NALInferenceEngine";
-import _ from "lodash";
-import { Truth } from "./Truth";
-import { Sentence } from "./Sentence";
+import _ from "lodash"; 
+import { Sentence } from "./nalCorePrimitives";
 
 export class Reasoner {
   private _memory = MemoryStore.getState().memory;
-  private _time = MemoryStore.getState().time;
-  private _engine = MemoryStore.getState().engine;
+  private _time = MemoryStore.getState().time; 
   private _channel = MemoryStore.getState().channel;
 
   /** internal inference engine state (rules + facts) */
@@ -39,8 +37,7 @@ export class Reasoner {
   }
 
   get memory() { return this._memory; }
-  get time() { return this._time; }
-  get engine() { return this._engine; }
+  get time() { return this._time; } 
   get channel() { return this._channel; }
 
   /**
