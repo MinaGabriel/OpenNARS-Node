@@ -1,0 +1,40 @@
+{
+  "budget": null,
+  "sentence": {
+    "content": {
+      "subject": {
+        "subject": {
+          "type": "atom",
+          "value": "A"
+        },
+        "copula": {
+          "type": "inheritance"
+        },
+        "predicate": {
+          "type": "atom",
+          "value": "B"
+        }
+      },
+      "copula": {
+        "type": "implication"
+      },
+      "predicate": {
+        "subject": {
+          "type": "atom",
+          "value": "M"
+        },
+        "copula": {
+          "type": "inheritance"
+        },
+        "predicate": {
+          "type": "atom",
+          "value": "S"
+        }
+      }
+    },
+    "type": "judgment",
+    "symbol": ".",
+    "tense": null,
+    "value": null
+  }
+}

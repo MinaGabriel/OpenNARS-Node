@@ -1,0 +1,129 @@
+?start: task
+
+task : [budget] sentence                                       // (* task to be processed *)
+?sentence.0 : (term_nonvar|statement) "." [tense] [truth]  -> judgement   // (* Example: <Bird --> Fly>. %0.9;0.8% - A judgement statement with truth value *)
+        | (term_nonvar|statement) "?" [tense]            -> question    // (* Example: <Bird --> Fly>? - A question asking about the truth of the statement *)
+        | (term_nonvar|statement) "!" [tense] [desire]   -> goal        // (* Example: <Robot --> [charged]>! :future: %0.7;0.6% - A goal to achieve in the future *)
+        | (term_nonvar|statement) "@" [tense]            -> quest       // (* Example: <Bird --> Fly>@ - A quest asking about the desire value of the statement *)
+
+?statement.0 : "<" term copula term ">"               // (* Example: <Bird --> Fly> - A statement relating two terms with a copula *)
+        | "(" term copula term ")"                  // (* Example: (Bird --> Fly) - Alternative notation for a statement *)
+        | "(" op ("," term)* ")"             -> statement_operation1    // (* Example: (^move, Robot, north) - An operation to be executed *)
+        | word "(" term ("," term)* ")"            -> statement_operation2 // (* Example: move(Robot, north) - New notation for an operation *)
+
+?copula : "-->" -> inheritance                                    // (* Example: --> in <Bird --> Fly> - Indicates inheritance *)
+        | "<->" -> similarity                                    // (* Example: <-> in <A <-> B> - Indicates similarity *)
+        | "{--" -> instance                                   // (* Example: {-- in <{Tweety} {-- Bird> - Indicates instance *)
+        | "--]" -> property                                   // (* Example: --] in <Tweety --] [yellow]> - Indicates property *)
+        | "{-]" -> instance_property                                    // (* Example: {-] in <{Tweety} {-] [yellow]> - Indicates instance-property *)
+        | "==>" -> implication                                   // (* Example: ==> in <A ==> B> - Indicates implication *)
+        | "=/>" -> predictive_implication                                    // (* Example: =/> in <A =/> B> - Indicates predictive implication *)
+        | "=|>" -> concurrent_implication                                    // (* Example: =|> in <A =|> B> - Indicates concurrent implication *)
+        | "=\>" -> retrospective_implication                                    // (* Example: =\> in <A =\> B> - Indicates retrospective implication *)
+        | "<=>" -> equivalence                                    // (* Example: <=> in <A <=> B> - Indicates equivalence *)
+        | "</>" -> predictive_equivalence                                    // (* Example: </> in <A </> B> - Indicates predictive equivalence *)
+        | "<|>" -> concurrent_equivalence                                    // (* Example: <|> in <A <|> B> - Indicates concurrent equivalence *)
+
+?term : variable        -> variable_term                          // (* Example: $x - A variable term *)
+        | term_nonvar
+
+?term_nonvar: interval
+        | word        -> atom_term                         // (* Example: Bird - An atomic constant term *)
+        | compound_term   -> compound_term                          // (* Example: (&, Fly, Sing) - A compound term *)
+        | statement       -> statement_term                          // (* Example: <Bird --> Fly> - A statement used as a term *)
+        | op
+        
+op : "^" word                                             // (* Example: ^move - An operator for an operation *)
+interval: "+" NUMBER                                      // (* Example: +5 - An interval term *)
+
+?compound_term : set
+        | multi                                     // (* Example: (&&, A, B) - A multi-term compound with prefix operator *)
+        | single                                    // (* Example: (A & B) - A compound term with infix operator *)
+        | ext_image                                 // (* Example: (/, A, _, B) - Extensional image *)
+        | int_image                                  // (* Example: (\, A, _, B) - Intensional image *)
+        | negation                                   // (* Example: (--, A) - Negation of a term *)
+
+?set : int_set
+        | ext_set
+?int_set   : con_int_set term ("," term)* "]"  -> set                               // (* Example: [Fly, Sing] - Intensional set *)
+?ext_set   : con_ext_set term ("," term)* "}"  -> set                               // (* Example: {Tweety, Robin} - Extensional set *)
+
+negation  : con_negation term                                                // (* Example: --A - Negation of term A *)
+        | "(" con_negation "," term ")"                       // (* Example: (--, A) - Negation, new notation *)       
+int_image : "(" con_int_image "," term ("," term)* ")"                                // (* Example: (\, A, _, B) - Intensional image *)
+ext_image : "(" con_ext_image "," term ("," term)* ")"                                 // (* Example: (/, A, _, B) - Extensional image *)
+?multi : "(" con_multi "," term ("," term)+ ")" -> multi_prefix    // (* Example: (&&, A, B, C) - Multi-term with prefix conjunction *)
+        | "(" multi_infix_expr ")"             // (* Example: (A && B) - Multi-term with infix operator *)
+        | "(" term ("," term)+ ")"                                  -> multi_prefix_product// (* Example: (A, B) - Product term *)
+        | "(" con_product "," term ("," term)* ")"                  -> multi_prefix    // (* Example: (*, A, B) - Product with prefix operator *)
+
+?single : "(" con_single "," (term|multi_infix_expr) "," (term|multi_infix_expr) ")"  -> single_prefix   // (* Example: (-, A, B) - Extensional difference with prefix *)
+        | "(" (term|multi_infix_expr) con_single (term|multi_infix_expr) ")"          -> single_infix    // (* Example: (A - B) - Extensional difference with infix *)
+
+?multi_infix_expr : multi_extint_expr
+        | multi_intint_expr
+        | multi_parallel_expr
+        | multi_sequential_expr
+        | multi_conj_expr
+        | multi_disj_expr
+        | multi_prod_expr
+
+?multi_prod_expr : term6 ("*" term6)+                      // (* Example: A * B - Product term with highest precedence *)
+?term6 : (term5|multi_disj_expr)
+?multi_disj_expr: term5 ("||" term5)+                      // (* Example: A || B - Disjunction *)
+?term5 : (term4|multi_conj_expr)
+?multi_conj_expr: term4 ("&&" term4)+                      // (* Example: A && B - Conjunction *)
+?term4 : (term3|multi_sequential_expr)
+?multi_sequential_expr: term3 ("&/" term3)+                // (* Example: A &/ B - Sequential events *)
+?term3 : (term2|multi_parallel_expr)
+?multi_parallel_expr: term2 ("&|" term2)+                  // (* Example: A &| B - Parallel events *)
+?term2 : (term1|multi_intint_expr)
+?multi_intint_expr : term1 ("|" term1)+                    // (* Example: A | B - Intensional intersection *)
+?term1 : (term|multi_extint_expr)
+?multi_extint_expr : term ("&" term)+                      // (* Example: A & B - Extensional intersection *)
+
+?con_multi : "&&"     -> con_conjunction                                // (* Example: && in (&&, A, B) - Conjunction operator *)
+        | "||"        -> con_disjunction                              // (* Example: || in (||, A, B) - Disjunction operator *)
+        | "&|"        -> con_parallel_events                              // (* Example: &| in (&|, A, B) - Parallel events operator *)
+        | "&/"        -> con_sequential_events                // (* Example: &/ in (&/, A, B) - Sequential events operator *)
+        | "|"         -> con_intensional_intersection              // (* Example: | in (|, A, B) - Intensional intersection operator *)
+        | "&"         -> con_extensional_intersection                              // (* Example: & in (&, A, B) - Extensional intersection operator *)
+con_product: "*"                                       // (* Example: * in (*, A, B) - Product operator *)
+
+?con_single : "-"     -> con_extensional_difference                             // (* Example: - in (-, A, B) - Extensional difference operator *)
+        | "~"         -> con_intensional_difference                             // (* Example: ~ in (~, A, B) - Intensional difference operator *)
+?con_int_set: "["                                 // (* Example: [ in [A, B] - Start of intensional set *) 
+?con_ext_set: "{"                                  // (* Example: { in {A, B} - Start of extensional set *)
+
+?con_negation : "--"                              // (* Example: -- in --A - Negation operator *)
+
+?con_int_image : "\\"                              // (* Example: \ in (\, A, _, B) - Intensional image operator *)
+?con_ext_image : "/"                              // (* Example: / in (/, A, _, B) - Extensional image operator *)
+
+?variable.0 : "$" word -> independent_var              // (* Example: $x - Independent variable *)
+        | "#" word   -> dependent_var                // (* Example: #y - Dependent variable *)
+        | "?" word   -> query_var                    // (* Example: ?z - Query variable *)
+
+?tense : ":!" NUMBER ":" -> tense_time                 // (* Example: :!5: - Tense with specific time *)
+        | ":/:"       -> tense_future                       // (* Example: :/: - Future tense *)
+        | ":|:"      -> tense_present                      // (* Example: :|: - Present tense *)
+        | ":\:"      -> tense_past                         // (* Example: :\: - Past tense *)
+
+?desire : truth                                                          // (* Example: %0.7;0.6% - Desire value same as truth format *)
+truth : "%" frequency [";" confidence [";" k_evidence]] "%"             // (* Example: %0.9;0.8% - Truth value with frequency and confidence *)
+budget.2: "$" priority [";" durability [";" quality]] "$"                // (* Example: $0.5;0.9;0.3$ - Budget with priority, durability, quality *)
+
+?word : string_raw | string                                     // (* Example: Bird or "Tweety Bird" - A word or quoted string *)    
+?priority : /([0]?\.[0-9]+|1\.[0]*|1|0)/             // (* Example: 0.5 - Priority value between 0 and 1 *)
+?durability : /[0]?\.[0]*[1-9]{1}[0-9]*/             // (* Example: 0.9 - Durability value between 0 and 1, excluding 0 *)
+?quality : /([0]?\.[0-9]+|1\.[0]*|1|0)/              // (* Example: 0.3 - Quality value between 0 and 1 *)
+?frequency : /([0]?\.[0-9]+|1\.[0]*|1|0)/            // (* Example: 0.9 - Frequency value between 0 and 1 *)
+?confidence : /[0]?\.[0]*[1-9]{1}[0-9]*/             // (* Example: 0.8 - Confidence value between 0 and 1, excluding 0 *)
+?k_evidence: /[1-9]{1}[0-9]*/                           // (* Example: 1 - Evidence parameter greater than 0 *)
+
+?string: /"[^"]+"/                                       // (* Example: "Tweety Bird" - Quoted string *)
+?string_raw: /[^\-^\+^<^>^=^"^&^|^!^.^?^@^~^%^;^\,^:^\/^\\^*^#^$^\[^\]^\{^\}^\(^\)^\ ]+/  // (* Example: Bird - Raw string without reserved characters *)
+
+%import common.WS
+%import common.SIGNED_INT -> NUMBER
+%ignore WS

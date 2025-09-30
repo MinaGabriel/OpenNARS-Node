@@ -1,0 +1,58 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Debug index.ts
+      "type": "node",
+      "request": "launch",
+      "name": "Debug index.ts",
+      "program": "${workspaceFolder}/index.ts",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      // Run index.ts without debugger
+      "type": "node",
+      "request": "launch",
+      "name": "Run index.ts (no debug)",
+      "program": "${workspaceFolder}/index.ts",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "cwd": "${workspaceFolder}",
+      "noDebug": true,
+      "console": "integratedTerminal"
+    },
+    {
+      // Debug currently open file
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Current File",
+      "program": "${file}",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      // Debug all Vitest tests
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Vitest (all tests)",
+      "runtimeExecutable": "npx",
+      "args": ["vitest", "run"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      // Debug currently open Vitest test file
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Vitest (file)",
+      "runtimeExecutable": "npx",
+      "args": ["vitest", "run", "${relativeFile}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}

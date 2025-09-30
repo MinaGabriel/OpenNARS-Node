@@ -1,0 +1,110 @@
+{
+    "todo-tree.tree.showScanModeButton": true,
+    "todo-tree.highlights.defaultHighlight": {
+        "type": "text-and-comment",
+        "foreground": "white"
+    },
+    "todo-tree.highlights.customHighlight": {
+        "TODO": {
+            "background": "#E3F2FD", // Light sky blue
+            "iconColour": "#1565C0", // Medium blue
+            "foreground": "#0D47A1" // Dark blue for contrast
+        },
+        "TOOBAD": {
+            "background": "#FFCDD2", // Soft red/pink
+            "iconColour": "#C62828", // Intense red
+            "foreground": "#B71C1C"
+        },
+        "FIXME": {
+            "background": "#FFF9C4", // Light yellow
+            "iconColour": "#F57F17", // Deep amber
+            "foreground": "#F57F17"
+        },
+        "NOTE": {
+            "background": "#C8E6C9", // Light green
+            "iconColour": "#2E7D32", // Deep green
+            "foreground": "#1B5E20"
+        },
+        "NARSESE": {
+            "background": "#FFE0B2", // Peach
+            "iconColour": "#EF6C00", // Deep orange
+            "foreground": "#E65100"
+        },
+        "TRACK": {
+            "background": "#D1C4E9", // Soft purple
+            "iconColour": "#512DA8", // Deep violet
+            "foreground": "#311B92"
+        },
+        "IMPROVE": {
+            "background": "#B2EBF2", // Aqua
+            "iconColour": "#00838F", // Cyan blue
+            "foreground": "#006064"
+        },
+        "MATH": {
+            "background": "#F3E5F5", // Light lavender
+            "iconColour": "#6A1B9A", // Strong purple
+            "foreground": "#4A148C"
+        },
+        "QUESTION": {
+            "background": "#F3E5F5", // Light lavender
+            "iconColour": "#6A1B9A", // Strong purple
+            "foreground": "#4A148C"
+        },
+        "TEMPORAL": {
+            "background": "#F3E5F5", // Light lavender
+            "iconColour": "#6A1B9A", // Strong purple
+            "foreground": "#4A148C"
+        },
+        "IMPORTANT": {
+            "background": "#F3E5F5", // Light lavender
+            "iconColour": "#6A1B9A", // Strong purple
+            "foreground": "#4A148C"
+        }
+    },
+    "todo-tree.general.tags": [
+        "TODO",
+        "TOOBAD",
+        "FIXME",
+        "NOTE",
+        "NARSESE",
+        "TRACK",
+        "IMPROVE",
+        "MATH",
+        "QUESTION",
+        "TEMPORAL",
+        "IMPORTANT"
+    ],
+    "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+    "todo-tree.tree.showBadges": true,
+    "todo-tree.tree.grouped": true,
+    "files.associations": {
+        "*.ttml": "xml",
+        "*.ttss": "css"
+    },
+    "cSpell.words": [
+        "Eternalization",
+        "keyphrase",
+        "keyphrases",
+        "lancedb",
+        "langchain",
+        "llms",
+        "NARS",
+        "Narsese",
+        "ollama",
+        "opennars",
+        "pegjs",
+        "punc",
+        "subterms",
+        "TASKLINK",
+        "TERMLINK",
+        "TOOBAD",
+        "uuidv",
+        "xenova"
+    ],
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false
+    }
+}

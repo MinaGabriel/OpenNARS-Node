@@ -1,0 +1,39 @@
+/** 1. Question sentence with compound term (conjunction and disjunction) in a statement */
+"if A and B are true or C is true, then D is true"
+<(A && B || C) ==> D>?
+
+/** 2. Judgment sentence with nested statements and variables */
+"if $1 is a Bird, then $2 is a Bird"
+<<$1 --> Bird> ==> <$2 --> Bird>>. %0.9;0.8;5%
+
+/** 3. Goal sentence with extensional set and tense */
+"Tweety and Robin should be Birds in the future"
+<{Tweety,Robin} --> Bird>! :future: %0.7;0.6;3%
+
+/** 4. Judgment sentence with intensional image in a compound term */
+"the relation between A and B is a Concept"
+<(\,A,_,B) --> Concept>. %0.95;0.85;10%
+
+/** 5. Question sentence with product term */
+"does Robot moving north count as an Action"
+<(*,Robot,north) --> Action>?
+
+/** 6. Quest sentence with negation in a compound term */
+"was the absence of Fly a Property in the past"
+<--Fly --> Property>@ :past:
+
+/** 7. Judgment sentence with extensional difference (infix) in a compound term */
+"the difference between A and B is a Difference"
+<(A - B) --> Difference>. %0.8;0.7;2%
+
+/** 8. Goal sentence with sequential events (compound term) and budget */
+"Event1 followed by Event2 should be a Sequence"
+$0.6;0.4;0.8$ <(Event1 &/ Event2) --> Sequence>! %0.9;0.85;4%
+
+/** 9. Question sentence with nested statement and variable */
+"is $x being Fly similar to Bird"
+<<$x --> Fly> <-> Bird>?
+
+/** 10. Judgment sentence with intensional set and specific tense */
+"Fly and Sing together are Properties at time 5"
+<[Fly,Sing] --> Properties>. :!5: %0.85;0.75;3%

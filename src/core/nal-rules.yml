@@ -1,0 +1,19 @@
+name: NAL Rules
+
+rules:
+  nal1: |
+    {<M --> P>. <S --> M>} |- <S --> P> .deduction
+    {<P --> M>. <M --> S>} |- <P --> S> .deduction'
+    {<M --> P>. <M --> S>} |- <S --> P> .induction
+    {<M --> P>. <M --> S>} |- <P --> S> .induction'
+    {<P --> M>. <S --> M>} |- <S --> P> .abduction
+    {<P --> M>. <S --> M>} |- <P --> S> .abduction'
+    {<P --> M>. <M --> S>} |- <S --> P> .exemplification
+    {<M --> P>. <S --> M>} |- <P --> S> .exemplification'
+
+  immediate: |
+    S |- (--, S) .negative
+    (--, S) |- S .negative
+    <S --> P> |- <P --> S> .conversion
+    <S ==> P> |- <P ==> S> .conversion
+    <S ==> P> |- <(--, P) ==> (--, S)> .contraposition
