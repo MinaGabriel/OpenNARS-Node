@@ -14,28 +14,28 @@ export class VectorDB {
     this.tableName = tableName;
   }
 
-  /** Initialize database, table, and embedding pipeline */
+  /** Initialize database, drop existing table, recreate, and load embedding pipeline */
   async init() {
     this.db = await lancedb.connect(this.dbPath);
 
+    // Drop table if it exists
     const tableNames = await this.db.tableNames();
     if (tableNames.includes(this.tableName)) {
-      this.table = await this.db.openTable(this.tableName);
-    } else {
-      // ⬇️ use non-nullable values so schema infers cleanly
-      this.table = await this.db.createTable(this.tableName, [
-        {
-          id: "init",
-          text: "initialization",
-          // keep it numeric; Float32Array also works if you prefer
-          vector: Array.from({ length: 384 }, () => 0),
-          chunk: "",           // ⬅️ IMPORTANT: not null, infer Utf8
-        },
-      ]);
-      await this.table.delete("id = 'init'");
+      await this.db.dropTable(this.tableName);
     }
 
-    // embedding pipeline...
+    // Create a fresh table
+    this.table = await this.db.createTable(this.tableName, [
+      {
+        id: "init",
+        text: "initialization",
+        vector: Array.from({ length: 384 }, () => 0),
+        chunk: "",
+      },
+    ]);
+    await this.table.delete("id = 'init'");
+
+    // Initialize embedding pipeline
     const pipe: FeatureExtractionPipeline = await pipeline(
       "feature-extraction",
       "Xenova/all-MiniLM-L6-v2"
@@ -43,18 +43,23 @@ export class VectorDB {
     this.embedFn = async (text: string): Promise<number[]> => {
       const out = await pipe(text, { pooling: "mean", normalize: true });
       return Array.from(out.data as Float32Array);
-    }; 
+    };
+  }
+
+  /** Drop the table completely */
+  async drop(): Promise<void> {
+    await this.db.dropTable(this.tableName);
   }
 
   /** Add documents with automatic embeddings */
-  async addToken(tokens: { id: string; text: string; chunk?: string }[]) { 
+  async addToken(tokens: { id: string; text: string; chunk?: string }[]) {
     if (!tokens?.length) return 0;
 
     const vectors = await Promise.all(
       tokens.map(async (t) => ({
         id: t.id,
         text: t.text,
-        vector: await this!.embedFn!(t.text),
+        vector: await this.embedFn(t.text),
         chunk: t.chunk ?? "",
       }))
     );
@@ -67,18 +72,17 @@ export class VectorDB {
   async search(query: string, topK = 3, chunkFilter?: string) {
     const qvec = await this.embedFn(query);
     let search = this.table.vectorSearch(qvec).limit(topK);
-    
+
     if (chunkFilter) {
       search = search.where(`chunk = '${chunkFilter}'`);
     }
-    
+
     return await search.toArray();
   }
 
   /** Get total number of records */
   async count(): Promise<number> {
-    const result = await this.table.countRows();
-    return result;
+    return await this.table.countRows();
   }
 
   /** Delete records by ID */

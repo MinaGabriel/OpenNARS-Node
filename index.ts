@@ -12,9 +12,8 @@ async function main() {
   LogFunctions.init();
   LogFunctions.info("Application started");
 
-  // 🔹 CRITICAL: initialize the vector DB once
+  //initialize the vector DB once
   await MemoryStore.getState().vectorDB.init();
-
   const nars = new Reasoner();
 
   // -------------------------
@@ -38,25 +37,25 @@ async function main() {
 
   consoleInterface.on("line", async (input) => {
     if (isPrefix(input.trim(), ":")) {
-      const text = stripPrefix(input.trim(), ":");
+      const text = stripPrefix(input.trim(), ":").toLowerCase();
       if (!text) {
         console.log("Please provide some text after ':'");
       } else {
         const id = MemoryStore.getState().bm25.add(text);
 
         try {
-          const keyphrases = await MemoryStore.getState().llms.extractKeyphrases(text);
+          const itemsAndWeights = await MemoryStore.getState().llms.extractItemsAndWeights(text);
           const base = uuidv4();
           await Promise.all(
-            keyphrases.map((kp, idx) =>
+            itemsAndWeights.map((itemWeight, idx) =>
               MemoryStore.getState().vectorDB.addToken([
-                { id: `${base}-${idx}`, text: kp.item, chunk: text },
+                { id: `${base}-${idx}`, text: itemWeight.item, chunk: text },
               ])
             )
           );
-          console.log("Keyphrases:", keyphrases);
+          console.log("Items and Weights:", itemsAndWeights);
         } catch (error) {
-          console.log("Failed to extract keyphrases:", error);
+          console.log("Failed to extract items weights:", error);
         }
 
         console.log(`BM25 indexed (#${id}): ${text}`);
@@ -66,64 +65,48 @@ async function main() {
       return;
     }
 
-    if (isPrefix(input.trim(), "?:")) {
-      const q = stripPrefix(input.trim(), "?:");
-      if (!q) {
-        console.log("Please provide a query after '?:'");
-      } else {
-        const hits = MemoryStore.getState().bm25.search(q);
-        if (hits.length === 0) {
-          console.log("No results.");
-        } else {
-          console.log(`Top results for: "${q}"`);
-          for (const h of hits) {
-            console.log(`- #${h.id}  score=${h.score.toFixed(4)}  ${h.body}`);
-          }
-        }
+    if (isPrefix(input.trim(), "?")) {
+      const q = stripPrefix(input.trim(), "?").toLowerCase();
+      if (!q) return; 
 
-        // 🔹 Semantic Vector search
-        try {
-          const vectors = await MemoryStore.getState().vectorDB.search(q, 5); // top 5
-          console.log(`\nVector search results for: "${q}"`);
-          if (vectors.length === 0) {
-            console.log("No semantic matches.");
-          } else {
-            for (const v of vectors) {
-              console.log(`- id=${v.id}  text="${v.text}"  chunk="${v.chunk}"`);
-            }
-          }
-        } catch (err) {
-          console.error("Vector search failed:", err);
-        }
       
+      const userInput = await MemoryStore.getState().llms.extractItemsAndWeights(q);
+      const uniqUserInput = _.uniqBy(userInput, 'item');
+      const stringifyUserInput = _.join(_.map(uniqUserInput, 'item'), ' '); 
+      // S_l Lexical scores
+      const lexicalScores = MemoryStore.getState().bm25.search(stringifyUserInput);
+      const minByScore = _.minBy(lexicalScores, 'score')?.score ?? 0;
+      const maxByScore = _.maxBy(lexicalScores, 'score')?.score ?? 1;
+      //\tilde{S}_l normalized lexical scores: 
+      const normalizedLexicalScores = lexicalScores.map(s => ({...s, normScore: (s.score - minByScore) / (maxByScore - minByScore + 1e-6)}));
+      // +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 
+      
+      return;
     }
-    consoleInterface.prompt();
-    return;
-  }
 
     switch (input.trim().toLowerCase()) {
-    case "exit":
-      process.exit(0);
-    case "time":
-      PrintFunctions.printTimeInfo();
-      break;
-    case "concepts":
-      PrintFunctions.conceptBagTableView();
-      break;
-    case "tasks":
-      PrintFunctions.globalTaskBagTableView();
-      break;
-    default: {
-      const [success, task, overflow] = nars.inputNarsese(input);
-      const concepts: ConceptBag = MemoryStore.getState().memory.conceptsBag;
-      // ...
-      break;
+      case "exit":
+        process.exit(0);
+      case "time":
+        PrintFunctions.printTimeInfo();
+        break;
+      case "concepts":
+        PrintFunctions.conceptBagTableView();
+        break;
+      case "tasks":
+        PrintFunctions.globalTaskBagTableView();
+        break;
+      default: {
+        const [success, task, overflow] = nars.inputNarsese(input);
+        const concepts: ConceptBag = MemoryStore.getState().memory.conceptsBag;
+        // ...
+        break;
+      }
     }
-  }
 
-  consoleInterface.prompt();
-});
+    consoleInterface.prompt();
+  });
 }
 
 main().catch((e) => {
