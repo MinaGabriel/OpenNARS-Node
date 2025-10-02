@@ -197,8 +197,7 @@ export interface MemoryStore {
     time: Time;
     memory: Memory;
     reasoner: Reasoner;
-    channel: NarseseChannel;
-    llms: LLMs;
+    channel: NarseseChannel; 
     bm25: BM25Engine;
     vectorDB: VectorDB;
     getNextStampSerial: () => number; // Serial number for the current stamp
@@ -209,8 +208,7 @@ export interface MemoryStore {
 export const MemoryStore = createStore<MemoryStore>((set) => ({
     time: new Time(),
     memory: new Memory(),
-    channel: new NarseseChannel(),
-    llms: new LLMs(),
+    channel: new NarseseChannel(), 
     bm25: new BM25Engine(),
     vectorDB: new VectorDB(),
     reasoner: undefined as unknown as Reasoner, // placeholder, set after
