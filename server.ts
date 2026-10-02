@@ -4,12 +4,10 @@ import express, { Request, Response } from "express";
 import readline from "readline";
 import cors from "cors"; 
 import { Reasoner } from "./src/core/Reasoner";
-import { LogFunctions } from "./src/core/utils/LogFunctions";
+import { LogFunctions } from "./src/core/LogFunctions";
 import _ from "lodash";
 
 const reasoner = new Reasoner();
-LogFunctions.init();
-LogFunctions.info("Application started");
 
 // -------------------------
 // Shared command handler

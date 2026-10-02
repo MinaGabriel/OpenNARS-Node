@@ -15,10 +15,6 @@ import { RuleFunctions, TruthFunctions } from "./RuleFunctions";
 import { createStore } from 'zustand/vanilla';
 import { Reasoner } from './Reasoner';
 import { NarseseChannel } from './NarseseChannel';
-import { LLMs } from "./LLMs";
-import { B } from "vitest/dist/chunks/worker.d.1GmBbd7G";
-import { BM25Engine } from "./BM25Engine";
-import { VectorDB } from "./VectorDB";
 // This file defines the MemoryStore, which is a Zustand store for managing the memory, time, reasoner, engine, and channel in the NARS system.
 
 /**
@@ -197,27 +193,21 @@ export interface MemoryStore {
     time: Time;
     memory: Memory;
     reasoner: Reasoner;
-    channel: NarseseChannel; 
-    bm25: BM25Engine;
-    vectorDB: VectorDB;
+    channel: NarseseChannel;
     getNextStampSerial: () => number; // Serial number for the current stamp
     resetAll: () => void;
-    
+
 }
 
 export const MemoryStore = createStore<MemoryStore>((set) => ({
     time: new Time(),
     memory: new Memory(),
-    channel: new NarseseChannel(), 
-    bm25: new BM25Engine(),
-    vectorDB: new VectorDB(),
+    channel: new NarseseChannel(),
     reasoner: undefined as unknown as Reasoner, // placeholder, set after
     getNextStampSerial: () => {
         currentStampSerial += 1;
         return currentStampSerial;
     },
-    
-    
     resetAll: () =>
         set({
             time: new Time(),
