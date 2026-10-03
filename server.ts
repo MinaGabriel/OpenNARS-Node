@@ -1,5 +1,5 @@
 // index.ts — silence console output for built-in commands
-
+// npx ts-node server.ts
 import express, { Request, Response } from "express";
 import readline from "readline";
 import cors from "cors"; 

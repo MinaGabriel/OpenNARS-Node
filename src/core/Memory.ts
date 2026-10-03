@@ -28,10 +28,8 @@ export class Memory {
     private _taskLinksBag: TaskLinkBag = new TaskLinkBag();
     private _termLinksBag: TermLinkBag = new TermLinkBag();
     private _globalTasksBag: GlobalTaskBag = new GlobalTaskBag();
-    private _novelTasksBag: NovelTaskBag = new NovelTaskBag();
     public task!: Task;
     public currentWorkingConcept: Concept | null = null;
-    private currentTime = 0; // cycles
 
     get conceptsBag(): ConceptBag { return this._conceptsBag; }
     get globalTasksBag(): GlobalTaskBag { return this._globalTasksBag; }
