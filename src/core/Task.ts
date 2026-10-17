@@ -48,7 +48,7 @@ export class Task extends Item {
    */
   private static makeKey(sentence: Judgment | Question): string {
     return sentence instanceof Judgment
-      ? `${sentence.statement.name()}. ${sentence.base}`
+      ? `${sentence.statement.name()}. {${sentence.base.key()}}`
       : `${sentence.statement.name()}?`;
   }
 
