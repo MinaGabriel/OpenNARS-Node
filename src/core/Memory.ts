@@ -39,10 +39,10 @@ export class Memory {
   }
 
   private addToConcept(term: Term, task: Task): void {
-    const existing = this.concepts.take(term.name());
+    const existing = this.concepts.peek(term.name());
     if (existing) {
       existing.addTask(task);
-      this.concepts.putBack(existing);
+      this.concepts.refresh(existing);   // keep its place in the queue (no starvation)
       return;
     }
     const concept = new Concept(term);

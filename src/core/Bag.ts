@@ -113,6 +113,16 @@ export class Bag<T extends Item> {
     }
   }
 
+  /** Re-files an item whose priority changed while it stayed in the bag. It keeps its
+ *  place in the queue unless its level changed; otherwise busy concepts would starve. */
+  refresh(item: T): void {
+    const level = this.levelOf.get(item.key);
+    const target = this.priorityToLevel(item.priority);
+    if (level === undefined || level === target) return;
+    this.removeFromLevel(item.key);
+    this.enterLevel(item, target);
+  }
+
   /** Removes an item from its level (not from the bag). Returns false if it wasn't in a level. */
   private removeFromLevel(key: string): boolean {
     const level = this.levelOf.get(key);
