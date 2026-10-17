@@ -1,278 +1,125 @@
-import { Item } from "./nalCorePrimitives";
+// Bag.ts
+// A collection where the chance of picking an item grows with its priority
+// (book §3.2, §4.2). It is how NARS divides limited attention: high-priority
+// items are picked often, low-priority ones rarely, and when the bag is full
+// the lowest ones are forgotten.
+//
+// Example: a concept's taskBag holding
+//   $0.95$ <robin --> animal>?      level 9, picked most often
+//   $0.40$ <robin --> bird>. ...    level 3, picked now and then
+//
+// Structure: a map key → item, plus L levels (buckets) of capacity B.
+// An item's level is ceil(priority × L) − 1. Each bucket is a queue: items
+// join at the back and are selected from the front, so items on the same
+// level take turns. When a bucket overflows, the item at the front (the one
+// that has waited longest) drops to the level below; below level 0 it is
+// forgotten.
+//
+// Life cycle of an item:
+//   put(item)      add a new item (or merge into the existing one with the same key)
+//   select()       pick an item by priority; it leaves its level but stays in the bag
+//   take(key)      the same, but for a specific key
+//   putBack(item)  decay its priority and return it to a level
+
+import { Item } from "./Item";
 import { Distributor } from "./Distributor";
-import { BudgetFunctions } from "./RuleFunctions";
-import { Task } from "./nalCorePrimitives";
-import { Concept } from "./Concept";
-import { Parameters } from "./Symbols";
-import { TaskLink } from "./Link";
-import { TermLink } from "./Link";
+import { PriorityFunc } from "./PriorityFunc";
 
-abstract class Bag<T extends Item> {
-    protected static readonly TOTAL_LEVEL: number = 100;
-    protected static readonly THRESHOLD: number = 10;
-    protected static readonly RELATIVE_THRESHOLD: number = Bag.THRESHOLD / Bag.TOTAL_LEVEL;
-    protected static readonly LOAD_FACTOR: number = 0.5;
-    protected static readonly DISTRIBUTOR: Distributor = new Distributor(Bag.TOTAL_LEVEL);
+export class Bag<T extends Item> {
+  private readonly items = new Map<string, T>();
+  private readonly levelOf = new Map<string, number>(); // only for items currently in a level
+  private readonly levels: T[][];
+  private readonly distributor: Distributor;
+  private pointer = 0;
 
-    protected name_table: Map<string, T>;
-    protected _item_table: Array<Array<T>>;
-    protected capacity: number;
-    protected forget_rate: number;
-    protected mass: number;
-    protected level_index: number;
-    protected current_level: number;
-    protected current_counter: number;
-    protected show_level: number;
+  constructor(readonly levelCount: number, readonly bucketCapacity: number) {
+    this.levels = Array.from({ length: levelCount }, () => []);
+    this.distributor = Distributor.new(levelCount);
+  }
 
-    constructor(capacity: number = 1000, forget_rate: number = 10) {
-        this.capacity = capacity;
-        this.forget_rate = forget_rate;
-        this.name_table = new Map<string, T>();
-        this._item_table = Array.from({ length: Bag.TOTAL_LEVEL }, () => []);
-        this.mass = 0;
-        this.level_index = capacity % Bag.TOTAL_LEVEL;
-        this.current_level = Bag.TOTAL_LEVEL - 1;
-        this.current_counter = 0;
-        this.show_level = Bag.THRESHOLD;
+  get capacity(): number { return this.levelCount * this.bucketCapacity; }
+  get size(): number { return this.items.size; }
+
+  has(key: string): boolean { return this.items.has(key); }
+  peek(key: string): T | undefined { return this.items.get(key); }
+
+  /**
+   * Adds an item. If one with the same key is already here, that one stays
+   * and absorbs the new one (priorities combine, beliefs pool their truth
+   * values). Returns the item now stored under the key.
+   */
+  put(item: T): T {
+    const existing = this.items.get(item.key);
+    if (existing) {
+      const wasInLevel = this.removeFromLevel(existing.key);
+      existing.merge(item);
+      if (wasInLevel) this.enterLevel(existing, this.priorityToLevel(existing.priority));
+      return existing;
     }
+    this.items.set(item.key, item);
+    this.enterLevel(item, this.priorityToLevel(item.priority));
+    return item;
+  }
 
-    public init(): void {
-        this._item_table = Array.from({ length: Bag.TOTAL_LEVEL }, () => []);
-        this.name_table.clear();
-        this.current_level = Bag.TOTAL_LEVEL - 1;
-        this.level_index = this.capacity % Bag.TOTAL_LEVEL;
-        this.mass = 0;
-        this.current_counter = 0;
+  /** Picks an item, with probability roughly proportional to priority. Null if none is available. */
+  select(): T | null {
+    for (let tries = 0; tries < this.distributor.length; tries++) {
+      const level = this.distributor.pick(this.pointer);
+      this.pointer = this.distributor.next(this.pointer);
+      const item = this.levels[level][0];
+      if (item) {
+        this.removeFromLevel(item.key);
+        return item;
+      }
     }
+    return null;
+  }
 
-    get item_table(): Array<Array<T>> {
-        return this._item_table;
+  /** Takes out a specific item (book: get). Null if absent or already taken out. */
+  take(key: string): T | null {
+    return this.removeFromLevel(key) ? this.items.get(key)! : null;
+  }
+
+  /** Returns a taken-out item after decaying its priority. */
+  putBack(item: T): void {
+    if (this.items.get(item.key) !== item) throw new Error(`putBack: ${item.key} was not taken from this bag`);
+    if (this.levelOf.has(item.key)) throw new Error(`putBack: ${item.key} was never taken out`);
+    PriorityFunc.decay(item);
+    this.enterLevel(item, this.priorityToLevel(item.priority));
+  }
+
+  /** All items, highest level first (for display and tests). */
+  toArray(): T[] {
+    return [...this.levels].reverse().flat();
+  }
+
+  private priorityToLevel(priority: number): number {
+    return Math.max(0, Math.ceil(priority * this.levelCount) - 1);
+  }
+
+  private enterLevel(item: T, level: number): void {
+    if (level < 0) {
+      // absolute forgetting
+      this.items.delete(item.key);
+      this.levelOf.delete(item.key);
+      return;
     }
-
-    public size(): number {
-        return this.name_table.size;
+    this.levels[level].push(item);
+    this.levelOf.set(item.key, level);
+    if (this.levels[level].length > this.bucketCapacity) {
+      const overflow = this.levels[level].shift()!;
+      this.levelOf.delete(overflow.key);
+      this.enterLevel(overflow, level - 1);
     }
+  }
 
-    public average_priority(): number {
-        if (this.size() === 0) return 0.01;
-        const f = this.mass / (this.size() * Bag.TOTAL_LEVEL);
-        return f > 1 ? 1.0 : f;
-    }
-
-    public contains(it: T): boolean {
-        return Array.from(this.name_table.values()).includes(it);
-    }
-
-    public get(key: string): T | undefined {
-        return this.name_table.get(key);
-    }
-
-    public toArray(): T[] {
-        return this._item_table.flat();
-    }
-
-    public putIn(newItem: T): boolean {
-        const newKey = newItem.key; // The key is the name of the item
-        const oldItem = this.name_table.get(newKey);
-
-        if (oldItem) {
-            this.outOfBase(oldItem);
-            newItem.merge(oldItem);
-        }
-
-        const overflowItem = this.intoBase(newItem);
-        this.name_table.set(newKey, newItem);
-
-        if (overflowItem) {
-            this.name_table.delete(overflowItem.key);
-            return overflowItem !== newItem;
-        }
-
-        return true;
-    }
-
-    public putBack(oldItem: T): boolean {
-        // Apply forgetting (decay the priority of the item's budget)
-        BudgetFunctions.forget(oldItem.budget, this.forget_rate, Bag.RELATIVE_THRESHOLD);
-
-        // Reinsert the item into the bag with its updated (lower) priority
-        return this.putIn(oldItem);
-    }
-
-    /*
-    | **If `current_level < THRESHOLD`** | **If `current_level ≥ THRESHOLD`**                         |
-    | ---------------------------------- | ---------------------------------------------------------- |
-    | It's a **low-priority** level      | It's a **normal/high-priority** level                      |
-    | You take **only 1 item**           | You take **all items (one per call)** until level is empty |
-    | Counter is set to `1`              | Counter is set to the full length of that level            |
-    */
-    // IMPORTANT:
-    public takeOut(): T | null {
-        if (this.name_table.size === 0) return null;
-
-        if (this.emptyLevel(this.current_level) || this.current_counter === 0) {
-            this.current_level = Bag.DISTRIBUTOR.pick(this.level_index);
-            this.level_index = Bag.DISTRIBUTOR.next(this.level_index);
-            while (this.emptyLevel(this.current_level)) {
-                this.current_level = Bag.DISTRIBUTOR.pick(this.level_index);
-                this.level_index = Bag.DISTRIBUTOR.next(this.level_index);
-            }
-
-            this.current_counter = this.current_level < Bag.THRESHOLD
-                ? 1
-                : this.item_table[this.current_level].length;
-        }
-
-        const selected = this.takeOutFirst(this.current_level);
-        this.name_table.delete(selected.key);
-        this.current_counter--;
-        return selected;
-    }
-
-    public pickOut(key: string): T | null {
-        const picked = this.name_table.get(key);
-        if (picked) {
-            this.outOfBase(picked);
-            this.name_table.delete(key);
-        }
-        return picked || null;
-    }
-
-    public peek(key: string): T | null {
-        return this.name_table.get(key) || null;
-    }
-
-    protected emptyLevel(n: number): boolean {
-        return !this.item_table[n] || this.item_table[n].length === 0;
-    }
-
-    private getLevel(item: T): number {
-        const level = Math.ceil(item.priority * Bag.TOTAL_LEVEL) - 1;
-        return level < 0 ? 0 : level;
-    }
-
-    private intoBase(newItem: T): T | null {
-        let oldItem: T | null = null;
-        const inLevel = this.getLevel(newItem);
-
-        if (this.size() > this.capacity) {
-            let outLevel = 0;
-            while (outLevel < Bag.TOTAL_LEVEL && this.emptyLevel(outLevel)) {
-                outLevel++;
-            }
-
-            if (outLevel > inLevel) {
-                return newItem;
-            } else {
-                oldItem = this.takeOutFirst(outLevel);
-            }
-        }
-
-        if (!this.item_table[inLevel]) {
-            this.item_table[inLevel] = [];
-        }
-
-        this.item_table[inLevel].push(newItem);
-        this.mass += inLevel + 1;
-        return oldItem;
-    }
-
-    private takeOutFirst(level: number): T {
-        const selected = this.item_table[level][0];
-        this.item_table[level].splice(0, 1);
-        this.mass -= level + 1;
-        return selected;
-    }
-
-    protected outOfBase(oldItem: T): void {
-        const level = this.getLevel(oldItem);
-        const index = this.item_table[level].indexOf(oldItem);
-        if (index !== -1) {
-            this.item_table[level].splice(index, 1);
-            this.mass -= level + 1;
-        }
-    }
-
-    public toString(): string {
-        let buf = " ";
-        for (let i = Bag.TOTAL_LEVEL; i >= this.show_level; i--) {
-            if (!this.emptyLevel(i - 1)) {
-                buf += `\n --- Level ${i}:\n `;
-                this.item_table[i - 1].forEach(item => {
-                    buf += `${item}\n `;
-                });
-            }
-        }
-        return buf;
-    }
-
-    public toStringLong(): string {
-        let buf = ` BAG ${this.constructor.name} ${this.showSizes()}`;
-        for (let i = Bag.TOTAL_LEVEL; i >= this.show_level; i--) {
-            if (!this.emptyLevel(i - 1)) {
-                buf += `\n --- LEVEL ${i}:\n `;
-                this.item_table[i - 1].forEach(item => {
-                    buf += `${item}\n `;
-                });
-            }
-        }
-        buf += `>>>> end of Bag ${this.constructor.name}`;
-        return buf;
-    }
-
-    private showSizes(): string {
-        let levels = 0;
-        let sizes = " ";
-        this.item_table.forEach(items => {
-            if (items && items.length > 0) {
-                levels++;
-                sizes += `${items.length} `;
-            }
-        });
-        return `Levels: ${levels}, sizes: ${sizes}`;
-    }
-
-    public setShowLevel(level: number): void {
-        this.show_level = level;
-    }
+  /** Removes an item from its level (not from the bag). Returns false if it wasn't in a level. */
+  private removeFromLevel(key: string): boolean {
+    const level = this.levelOf.get(key);
+    if (level === undefined) return false;
+    const bucket = this.levels[level];
+    bucket.splice(bucket.findIndex(i => i.key === key), 1);
+    this.levelOf.delete(key);
+    return true;
+  }
 }
-
-export { Bag };
-
-class NovelTaskBag extends Bag<Task> {
-    constructor() {
-        super();
-    }
-}
-
-export { NovelTaskBag };
-
-export class ConceptBag extends Bag<Concept> {
-    // ConceptBag specific implementations
-    constructor() {
-        super(Parameters.CONCEPT_BAG_SIZE);
-    }
-}
-
-export class GlobalTaskBag extends Bag<Task> {
-    // ConceptBag specific implementations
-    constructor() {
-        super(Parameters.GLOBAL_BUFFER_SIZE);
-    }
-}
-
-class TaskLinkBag extends Bag<TaskLink> {
-    constructor() {
-        super();
-    }
-}
-
-export { TaskLinkBag };
-
-class TermLinkBag extends Bag<TermLink> {
-    constructor() {
-        super();
-    }
-}
-
-export { TermLinkBag };

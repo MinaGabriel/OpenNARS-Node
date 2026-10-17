@@ -1,0 +1,29 @@
+// Phase 1: what the LLM said
+// --------------------------
+// #1 Q: Is a peanut a nut?
+<peanut --> nut>?
+// #2 A: Peanuts are nuts (LLM, P(True)=0.78)
+<peanut --> nut>. %0.78;0.50%
+// #3 P1: Peanuts grow in a hard shell (LLM, P(True)=0.90)
+<peanut --> shelled_seed>. %0.90;0.50%
+// #4 P2: Anything in a hard shell is a nut (LLM, P(True)=0.55)
+<shelled_seed --> nut>. %0.55;0.50%
+100
+
+
+// Phase 2: the evidence from the passages
+// ---------------------------------------
+// #5 E1: Peanuts are nuts, checked against D1 (P(True)=0.08)
+<peanut --> nut>. %0.08;0.80%
+// #6 E2: Peanuts are legumes, from D1 (P(True)=0.96)
+<peanut --> legume>. %0.96;0.80%
+// #7 E3: Anything in a hard shell is a nut, checked against D2 (P(True)=0.20)
+<shelled_seed --> nut>. %0.20;0.80%
+2000 
+
+
+// Phase 3: the follow-up from memory
+// ----------------------------------
+// #8 What is a peanut?
+<peanut --> ?x>?
+1000

@@ -1,116 +1,141 @@
-import _ from "lodash";
+// Concept.ts
+// Everything the system knows and is working on about one term (book §1.2, §4.2).
+// A concept is a node in the memory graph: its tasks and beliefs are the
+// edges to other concepts.
+//
+// Example: concept "bird" after two inputs
+//   taskBag:    <robin --> bird>.  <bird --> animal>.
+//   beliefBag:  <robin --> bird> %1.00;0.90%   <bird --> animal> %1.00;0.90%
+// Firing it can pair <bird --> animal> with <robin --> bird> and derive
+// <robin --> animal> by deduction: "bird" is the shared term.
 
-import { Budget } from "./nalCorePrimitives";
-import { BudgetFunctions } from "./RuleFunctions";
-import { Identifiable, LinkType, Punctuation } from "./Symbols";
-import { Item } from "./nalCorePrimitives";
-import { Judgement } from "./nalCorePrimitives";
-import { LogFunctions } from "./LogFunctions";
-import { Parameters } from "./Symbols";
-import { RuleFunctions } from "./RuleFunctions"; 
-import { StampFunctions } from "./RuleFunctions";
-import { Task } from "./nalCorePrimitives"; 
-import { TaskLinkBag, TermLinkBag } from "./Bag";
-import { Term } from "./nalCorePrimitives";
-import { Truth } from "./nalCorePrimitives";
-import { TruthFunctions } from "./RuleFunctions";
+import { Item } from "./Item";
+import { Bag } from "./Bag";
+import { Task } from "./Task";
+import { Term } from "./Term";
+import { Belief } from "./Belief";
+import { Judgment } from "./Judgment";
+import { Question } from "./Question";
+import { PriorityFunc } from "./PriorityFunc";
+import { inference, InferenceResult, emptyResult } from "./InferenceEngine";
+import { c, bar, pad, visible, sourceColor } from "./Colors";
 
+// Bag sizes as levels × bucket capacity (book §4.2)
+export const TASK_BAG = { levels: 10, bucket: 3 };
+export const BELIEF_BAG = { levels: 100, bucket: 5 };
 
-/**
- * Concept represents a term in memory (like `<bird --> animal>`). 
- * It manages beliefs, questions, and links to tasks/terms. 
- * 
- * Responsibilities:
- * - Store and update beliefs (judgements).
- * - Store questions and try to answer them.
- * - Perform local revision when new evidence arrives.
- * 
- * Example:
- * - New judgment `<bird --> fly>.` added → revise with old belief.
- * - Question `<bird --> ?x>?` stored → answered if a belief like `<bird --> fly>.` exists.
- */
-class Concept extends Item implements Identifiable {
-    private _term: Term;
-    private _taskLinksBag: TaskLinkBag;
-    private _termLinksBag: TermLinkBag;
-    private _questions: Task[] = [];
-    private _quests: Task[] = [];
-    private _beliefs: Task[] = [];
-    private _desires: Task[] = [];
+const NEW_CONCEPT_PRIORITY = 0.01;
 
-    constructor(term: Term, budget?: Budget) {
-        super(term.name(), budget);
-        this._term = term;
-        this._taskLinksBag = new TaskLinkBag();
-        this._termLinksBag = new TermLinkBag();
+/** Highest priority first, without changing the original array. */
+const byPriority = <T extends Item>(items: readonly T[]): T[] => [...items].sort((a, b) => b.priority - a.priority);
+
+export class Concept extends Item {
+  readonly taskBag = new Bag<Task>(TASK_BAG.levels, TASK_BAG.bucket);
+  readonly beliefBag = new Bag<Belief>(BELIEF_BAG.levels, BELIEF_BAG.bucket);
+
+  constructor(readonly term: Term) {
+    super(term.name(), NEW_CONCEPT_PRIORITY);
+  }
+
+  /** Book §4.3, newTask: store the task, turn a judgment into a belief, and activate. */
+  addTask(task: Task): void {
+    this.taskBag.put(task);
+    if (task.isJudgment()) this.beliefBag.put(Belief.fromTask(task));
+    PriorityFunc.activate(this, task.priority);
+  }
+
+  /** Book §4.3, fire: one inference step between a selected task and a selected belief. */
+  fire(): InferenceResult {
+    const task = this.taskBag.select();
+    if (!task) return emptyResult();
+
+    let result = emptyResult();
+    const belief = this.beliefBag.select();
+    if (belief) {
+      const entry = belief.selectTruth(task.sentence.base);
+      if (entry) result = inference(task, entry, belief);
+      this.beliefBag.putBack(belief);
+    }
+    this.taskBag.putBack(task);
+    return result;
+  }
+
+  /** Prints this concept in the same table layout as printAll. */
+  print(): void {
+    Concept.printAll([this]);
+  }
+
+  /**
+   * Prints concepts as one table: each concept is a group of rows, its tasks
+   * first, then its beliefs. A belief with several truth values gets one row
+   * per value, best first.
+   *
+   *  #  concept           bag     priority         statement            truth / answer  evidence  source
+   *  1  animal ████ 0.92  task    ██████████ 0.96  <robin --> animal>.  %1.00;0.81%     {1,2}     derived deduction
+   *                       task    ██░░░░░░░░ 0.16  <robin --> animal>?  → %1.00;0.81%   {3}       user
+   *                       belief  ██████████ 0.98  <bird --> animal>    %1.00;0.90%     {1}
+   */
+  static printAll(concepts: readonly Concept[]): void {
+    if (concepts.length === 0) {
+      console.log(`  ${c.dim}(no concepts)${c.reset}`);
+      return;
     }
 
-    name(): string { return this.term.name(); }
-    toString(): string { return `${this.name()}`; }
+    const header = ["#", "concept", "bag", "priority", "statement", "truth / answer", "evidence", "source"];
+    const groups = byPriority(concepts).map((concept, i) => concept.rows(i + 1));
+    const all = [header, ...groups.flat()];
+    const widths = header.map((_, col) => Math.max(...all.map(row => visible(row[col] ?? ""))));
+    const line = (cells: string[]) => "  " + cells.map((cell, col) => pad(cell, widths[col])).join("  ");
+    const rule = c.gray + "  " + widths.map(w => "─".repeat(w)).join("──") + c.reset;
 
-    get taskLinks(): TaskLinkBag { return this._taskLinksBag; }
-    set taskLinks(links: TaskLinkBag) { this._taskLinksBag = links; }
-    get termLinks(): TermLinkBag { return this._termLinksBag; }
-    set termLinks(links: TermLinkBag) { this._termLinksBag = links; }
-    get beliefs(): Task[] { return this._beliefs; }
-    get term(): Term { return this._term; }
-    get questions(): Task[] { return this._questions; }
-    get quests(): Task[] { return this._quests; }
-    get desires(): Task[] { return this._desires; }
+    console.log(`${c.bold}MEMORY${c.reset} ${c.dim}${concepts.length} concepts${c.reset}`);
+    console.log(c.dim + line(header) + c.reset);
+    for (const group of groups) {
+      console.log(rule);
+      for (const row of group) console.log(line(row));
+    }
+    console.log(rule);
+  }
 
-    /** Add a question to this concept (FIFO capped by CONCEPT_GOALS_MAX). */
-    public addQuestion(task: Task): void {
-        if (this._questions.length >= Parameters.CONCEPT_GOALS_MAX) this._questions.shift();
-        this._questions.push(task);
+  /** Table rows for this concept: tasks, then beliefs. Only the first row names the concept. */
+  private rows(index: number): string[][] {
+    const rows: string[][] = [];
+    const first = [`${c.dim}${index}${c.reset}`, `${c.bold}${c.cyan}${this.term}${c.reset} ${bar(this.priority)} ${this.priority.toFixed(2)}`];
+    const lead = () => (rows.length === 0 ? first : ["", ""]);
+
+    for (const t of byPriority(this.taskBag.toArray())) {
+      const kind = t.isJudgment() ? `${c.blue}task J${c.reset}` : `${c.magenta}task Q${c.reset}`;
+      rows.push([...lead(), kind, `${bar(t.priority)} ${t.priority.toFixed(2)}`,
+      `${t.statement.name()}${t.isJudgment() ? "." : "?"}`, Concept.truthOrAnswer(t),
+      `${c.gray}${t.sentence.base}${c.reset}`,
+      `${sourceColor[t.source]}${t.source}${c.reset}${t.derivation ? ` ${c.dim}${t.derivation.rule}${c.reset}` : ""}`]);
     }
 
-    /** Expectation difference used as "achievement" measure. */
-    private calcTaskAchievement(t1: Truth | null, t2: Truth | null): number {
-        if (t1 == null) return t2!.getExpectation();
-        return Math.abs(t1.getExpectation() - t2!.getExpectation());
+    for (const b of byPriority(this.beliefBag.toArray())) {
+      b.truthEntries.forEach((e, i) => {
+        const best = i === 0;
+        const origin = e.origin ? `${sourceColor[e.origin.source]}${e.origin.source}${c.reset}` +
+          (e.origin.derivation ? ` ${c.dim}${e.origin.derivation.rule}${c.reset}` : "") : "";
+        rows.push([...lead(),
+        best ? `${c.green}belief${c.reset}` : "",
+        best ? `${bar(b.priority)} ${b.priority.toFixed(2)}` : "",
+        best ? b.statement.name() : `${c.dim}  also${c.reset}`,
+        `${best ? c.green : c.dim}${e.truth}${c.reset}`,
+        `${c.gray}${e.base}${c.reset}`, origin]);
+      });
     }
 
-    /** Process a new judgment, possibly revising old beliefs. */
-    public processJudgment(newTask: Task): void {
-        const belief: Task | null = this.selectCandidate(newTask, this._beliefs);
-        if (belief) {
-            const newStamp = newTask.sentence.stamp, oldStamp = belief.sentence.stamp;
-            if (newStamp.equals(oldStamp, false, true, true)) return;
-            if (RuleFunctions.revisable(newTask.sentence, belief.sentence)) {
-                this.localRevision(newTask, belief);
-                newTask.achievement = this.calcTaskAchievement(newTask.sentence.truth, belief.sentence.truth);
-            }
-        }
-        if (newTask.budget.summary() > Parameters.BUDGET_THRESHOLD) this.addBelief(newTask);
-    }
+    if (rows.length === 0) rows.push([...first, `${c.dim}(empty)${c.reset}`, "", "", "", "", ""]);
+    return rows;
+  }
 
-    private addBelief(task: Task): void { this._beliefs.push(task); }
+  private static truthOrAnswer(t: Task): string {
+    if (t.sentence instanceof Judgment) return `${c.green}${t.sentence.truth}${c.reset}`;
+    const solution = (t.sentence as Question).solution;
+    return solution ? `${c.green}→ ${solution.truth}${c.reset}` : `${c.dim}unanswered${c.reset}`;
+  }
 
-    /** Pick the best matching belief based on solutionQuality. */
-    public selectCandidate(newTask: Task, list: Task[]): Task | null {
-        let currentBest = 0, belief: Task | null = null;
-        for (const task of list) {
-            const beliefQuality = RuleFunctions.solutionQuality(task, task.sentence, true);
-            if (beliefQuality > currentBest) { currentBest = beliefQuality; belief = task; }
-        }
-        if (!belief) LogFunctions.file.warn(`Concept.selectCandidate: No suitable belief for query: ${newTask.sentence}`);
-        return belief;
-    }
-
-    /** Local belief revision, merging two judgments into a stronger one. */
-    public localRevision(task: Task, belief: Task): Task {
-        const truthTask = task.sentence.truth, truthBelief = belief.sentence.truth;
-        if (truthTask && truthBelief) {
-            const truthDerived = TruthFunctions.revision(truthTask, truthBelief);
-            const [budgetDerived] = BudgetFunctions.revision(task.budget, truthTask, truthBelief, truthDerived);
-            const stampDerived = StampFunctions.revision(task.sentence.stamp, belief.sentence.stamp);
-            if (task.sentence.isJudgement()) {
-                return new Task(new Judgement(task.sentence.term, Punctuation.JUDGMENT, truthDerived, stampDerived?.tense, stampDerived), budgetDerived);
-            }
-        }
-        return task;
-    }
-
+  override toString(): string {
+    return `${this.term} $${this.priority.toFixed(2)}$`;
+  }
 }
-
-export { Concept };

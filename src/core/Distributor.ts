@@ -42,6 +42,11 @@ class Distributor {
         }
     }
 
+    /** Number of slots in the order array: L(L+1)/2 for L levels. */
+    get length(): number {
+        return this.capacity;
+    }
+
     /**
      * Get the value at a specific index in the order array
      * @param index - The index to pick
@@ -80,5 +85,3 @@ class Distributor {
 }
 
 export { Distributor };
- 
-

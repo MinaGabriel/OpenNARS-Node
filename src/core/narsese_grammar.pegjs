@@ -1,128 +1,81 @@
 /*
-cd ./src/core/ && npx peggy -o narsese_grammar.js narsese_grammar.pegjs && cd ../../
+  Mini-NARS Narsese grammar (book §4.1, Table 4.1).
+
+  Build:  npx peggy --format commonjs -o src/core/narsese_grammar.js src/core/narsese_grammar.pegjs
+
+  The parser returns a plain object (see narsese_grammar.d.ts); NarseseParser.ts
+  turns it into a Task. The grammar knows nothing about the TypeScript classes.
+
+  Accepted input:
+    <robin --> bird>.                     judgment, default truth
+    <robin --> bird>. %1.0;0.9%           judgment with truth
+    <robin --> bird>. %0.8%               judgment, frequency only
+    <robin --> animal>?                   question
+    <robin --> ?x>?                       question with a query variable
+    $0.8$ <robin --> bird>.               priority first (OpenNARS style)
+    <robin --> bird>. %1.0;0.9% $0.8$     priority last (book §4.6 style)
 */
 
-{
-  function makeTask(sentence, budget) { 
-    const defaults = {
-      '.': { p: options.Parameters.DEFAULT_JUDGMENT_PRIORITY, d: options.Parameters.DEFAULT_JUDGMENT_DURABILITY, q: 0.95 },
-      '?': { p: options.Parameters.DEFAULT_QUESTION_PRIORITY || 0.9, d: options.Parameters.DEFAULT_QUESTION_DURABILITY || 0.9, q: 1.0 },
-      '!': { p: 0.9, d: 0.9, q: 1.0 }
-    };
-    const punctuation = sentence.punctuation;
-    const def = defaults[punctuation] || defaults['.'];
-    const [priority, durability, quality] = budget || [];
-    const p = priority ?? def.p;
-    const d = durability ?? def.d;
-    const q = quality ?? (sentence.truth ? options.TruthFunctions.truthToQuality(sentence.truth) : def.q); 
-    return new options.Task(
-      sentence, 
-      new options.Budget(null, p, d, q)
-    );
-  }
-}
-
-/*********************
- * Grammar Rules
- *********************/
-
-start = _ task:task _ EOF { return task; }
-
-task = budget:budget? _ sentence:sentence { return makeTask(sentence, budget); }
+start
+  = _ before:priority? _ sentence:sentence _ after:priority? _ EOF {
+      if (before !== null && after !== null) error("Give the priority once, either before or after the sentence");
+      return { ...sentence, priority: before ?? after };
+    }
 
 sentence
-  = judgement
+  = judgment
   / question
-  / goal 
 
-judgement = term:(statement / compound_term) _ "." _ tense:tense? _ truth:truth? { return new options.Judgement(term, ".", truth, tense); }
-question  = term:(statement / compound_term) _ "?" _ tense:tense? { return new options.Question(term, tense); }
-goal      = term:(statement / compound_term) _ "!" _ tense:tense? _ desire:desire? { return new options.Goal(); } 
+judgment
+  = statement:statement _ "." _ truth:truth? {
+      if (statement.subject.startsWith("?") || statement.predicate.startsWith("?")) {
+        error("Variables are only allowed in questions");
+      }
+      return { kind: "judgment", ...statement, truth };
+    }
+
+question
+  = statement:statement _ "?" {
+      return { kind: "question", ...statement, truth: null };
+    }
 
 statement
-  = "<" _ subject:term _ copula:copula _ predicate:term _ ">" { return new options.Statement(subject, copula, predicate, options.TermType.STATEMENT); }
-  / "(" _ subject:term _ copula:copula _ predicate:term _ ")" { return new options.Statement(subject, copula, predicate); }
+  = "<" _ subject:term _ "-->" _ predicate:term _ ">" {
+      if (subject === predicate) error(`A term can't be related to itself: <${subject} --> ${predicate}>`);
+      if (subject.startsWith("?") && predicate.startsWith("?")) error("At most one variable per statement");
+      return { subject, predicate };
+    }
 
-budget = "$" priority:priority _ ";" _ durability:durability _ ";" _ quality:quality "$" { return [priority, durability, quality]; }
+term
+  = "?" name:word? { return "?" + (name ?? ""); }
+  / word
 
-tense = ":/:" { return options.Tense.FUTURE; }
-      / ":|:" { return options.Tense.PRESENT; }
-      / ":\\:" { return options.Tense.PAST; }
-      / ":-:"  { return options.Tense.ETERNAL; }
+word "word"
+  = $([a-zA-Z0-9_]+ ("-" [a-zA-Z0-9_]+)*)   // hyphens only inside a word, so <a-->b> still parses
 
-truth = "%" frequency:frequency ";"? confidence_and_k_evidence:confidence_k_evidence_group? "%" {
-  return new options.Truth(
-    frequency,
-    confidence_and_k_evidence ? confidence_and_k_evidence.confidence : null,
-    confidence_and_k_evidence ? confidence_and_k_evidence.k_evidence : null
-  );
-}
+truth
+  = "%" _ frequency:unit _ confidence:(";" _ c:unit _ { return c; })? "%" {
+      if (confidence !== null && (confidence <= 0 || confidence >= 1)) {
+        error("Confidence must be strictly between 0 and 1");
+      }
+      return { frequency, confidence };
+    }
 
-confidence_k_evidence_group = confidence:confidence ";"? k_evidence:k_evidence? { return { confidence, k_evidence }; }
+priority
+  = "$" _ value:unit _ "$" {
+      if (value <= 0) error("Priority must be greater than 0");
+      return value;
+    }
 
-desire = "%" symbol:number (";" confidence:number)? "%" { return { type: "desire", symbol, confidence }; }
+unit "number in [0, 1]"
+  = text:$([0-9]* ("." [0-9]+)?) &{ return text.length > 0; } {
+      const value = parseFloat(text);
+      if (value > 1) error(`${text} is out of range [0, 1]`);
+      return value;
+    }
 
-copula = symbol:"-->"  { return new options.Copula(symbol); }
-       / symbol:"<->"  { return new options.Copula(symbol); }
-       / symbol:"{--"  { return new options.Copula(symbol); }
-       / symbol:"--]"  { return new options.Copula(symbol); }
-       / symbol:"{-]"  { return new options.Copula(symbol); }
-       / symbol:"==>"  { return new options.Copula(symbol); }
-       / symbol:"=/>"  { return new options.Copula(symbol); }
-       / symbol:"=|>"  { return new options.Copula(symbol); }
-       / symbol:"=\\"  { return new options.Copula(symbol); }
-       / symbol:"<=>"  { return new options.Copula(symbol); }
-       / symbol:"</>"  { return new options.Copula(symbol); }
-       / symbol:"<|>"  { return new options.Copula(symbol); }
+_ "whitespace"
+  = [ \t\r\n]*
 
-term = variable:variable { return variable; }
-     / non_variable:non_variable { return non_variable; }
-
-variable = symbol:"?" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol); }
-         / symbol:"#" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol); }
-         / symbol:"$" _ name:word { return new options.Term(symbol + name, options.TermType.ATOM, symbol); }
-
-non_variable = name:word { return new options.Term(name, options.TermType.ATOM); }
-             / compound_term
-             / statement 
- 
-word = chars:[a-zA-Z_]+ { return chars.join("").trim(); }
-
-/*********************
- * Compound Terms
- * Examples: 
- *   Negation: (--, Bird)
- *********************/
-
-compound_term
-  =   negation
-
-/* Negation */
-negation =  "(" _ "--" _ "," _ inner:term _ ")" { return new options.Compound(new options.Connector(options.ConnectorType.NEGATION), [inner]); } 
-
-/*********************
- * Numbers
- *********************/
-
-number      = n:[0-9]+ ("." d:[0-9]+)? { return parseFloat(text()); }
-confidence  = [0]? "." [0]* [1-9] [0-9]* { return parseFloat(text()); }
-           / "1" "." "0"* { return 1.0; }
-           / "1" { return 1.0; }
-priority    = [0]? "." [0-9]+ { return parseFloat(text()); }
-           / "1" "." "0"* { return 1.0; }
-           / "1" { return 1.0; }
-           / "0" { return 0.0; }
-durability  = [0]? "." [0]* [1-9] [0-9]* { return parseFloat(text()); }
-           / "1" "." "0"* { return 1.0; }
-           / "1" { return 1.0; }
-quality     = [0]? "." [0-9]+ { return parseFloat(text()); }
-           / "1" "." "0"* { return 1.0; }
-           / "1" { return 1.0; }
-           / "0" { return 0.0; }
-frequency   = [0]? "." [0-9]+ { return parseFloat(text()); }
-           / "1" "." "0"* { return 1.0; }
-           / "1" { return 1.0; }
-k_evidence  = [1-9] [0-9]* { return parseInt(text(), 10); }
-
-_ "whitespace" = [ \t\n\r]* { return null; }
-EOF "end of input" = !.
+EOF "end of input"
+  = !.
