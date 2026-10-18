@@ -21,7 +21,11 @@ export class Memory {
   /** Sends a task to the concepts of its subject and predicate. */
   addTask(task: Task): void {
     for (const term of [task.statement.subject, task.statement.predicate]) {
-      if (!term.isVariable()) this.addToConcept(term, task);
+      if (term.isVariable()) continue;
+      // A user's question replaces a derived copy of the same question, so that it is
+      // answered (and reported) afresh instead of merging into the derived one.
+      if (task.isQuestion() && task.isInput()) this.concepts.peek(term.name())?.taskBag.remove(task.key);
+      this.addToConcept(term, task);
     }
   }
 

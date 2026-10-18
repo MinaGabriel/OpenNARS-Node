@@ -80,6 +80,15 @@ export class Bag<T extends Item> {
     return this.removeFromLevel(key) ? this.items.get(key)! : null;
   }
 
+  /** Removes an item from the bag for good (it will not be put back). */
+  remove(key: string): T | null {
+    const item = this.items.get(key);
+    if (!item) return null;
+    this.removeFromLevel(key);
+    this.items.delete(key);
+    return item;
+  }
+
   /** Returns a taken-out item after decaying its priority. */
   putBack(item: T): void {
     if (this.items.get(item.key) !== item) throw new Error(`putBack: ${item.key} was not taken from this bag`);

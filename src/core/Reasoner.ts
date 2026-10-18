@@ -39,9 +39,12 @@ export class Reasoner {
   /** Number of cycles run so far. */
   get clock(): number { return this._clock; }
 
-  /** Adds a task to the buffer. Returns false if the buffer was full and dropped it. */
+  /** Adds an input task directly to memory and returns true. */
   input(task: Task): boolean {
-    return this.buffer.add(task);
+    // User input goes straight to memory: in the buffer it could be dropped when the buffer is
+    // full of derived tasks, or merged into a derived task with the same key and lose its source.
+    this.memory.addTask(task);
+    return true;
   }
 
   /** Parses a Narsese line and adds it. Throws NarseseError on invalid input. */
